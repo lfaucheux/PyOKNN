@@ -19,12 +19,7 @@
 
 # How
 
-## Installation
-    git clone https://github.com/lfaucheux/oknn.git    [!!!] Still not effective [!!!]
-    cd oknn
-    python setup.py install
-
-## Requirements
+## [Python2.7.+](https://www.python.org/ftp/python/2.7.14/python-2.7.14.msi) requirements
 
 - **[matplotlib](https://matplotlib.org/)** *(tested under 1.4.3)*
 - **[numdifftools](https://pypi.python.org/pypi/Numdifftools)**        *(tested under 0.9.20)* 
@@ -33,11 +28,26 @@
 - **[scipy](https://www.scipy.org/)**        *(tested under 1.0.0)* 
 - **[pysal](http://pysal.readthedocs.io/en/latest/)**        *(tested under 1.14.3)* 
 
-## Use cases
 
-- **Spatial econometric modelling**
+
+## Installation
+
+We are going to use a package management system used to install and manage software packages written in Python, namely [pip](https://en.wikipedia.org/wiki/Pip_(package_manager)). Open a session in your OS shell prompt and type
+
+    pip install PyOKNN
 
 ## Example usage:
+The example that follows is done via the Python Shell. Let's first import the module `PyOKNN`.
 
-    >>> import PyOKNN
-    >>> [...]
+    >>> import PyOKNN as ok  
+
+We use Anselin's Columbus OH 49 observation data set. Since the data set is included in PyOKNN, there is no need to mention the path directory.
+
+    >>> ok.Presenter(
+    ...     data_name = 'columbus',
+    ...     y_name    = 'CRIME',
+    ...     x_names   = ['INC', 'HOVAL'],
+    ...     id_name   = 'POLYID',
+    ... )
+    
+[ Forthcoming ] 
