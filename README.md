@@ -41,7 +41,7 @@ The example that follows is done via the Python Shell. Let's first import the mo
 
     >>> import PyOKNN as ok  
 
-We use Anselin's Columbus OH 49 observation data set. Since the data set is included in PyOKNN, there is no need to mention the path directory.
+We use [Anselin's Columbus OH 49 observation data set](http://geoda.googlecode.com/svn/trunk/SampleData/Examples/columbus/shapefile/). Since the data set is included in PyOKNN, there is no need to mention the path directory.
 
     >>> ok.Presenter(
     ...     data_name = 'columbus',
