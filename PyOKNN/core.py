@@ -6,7 +6,7 @@ __authors__ = [
     "laurent.faucheux@hotmail.fr",
 ]
 
-__version__ = '0.1.60'
+__version__ = '0.1.61'
 
 __all__     = [
     '__authors__',
@@ -2269,32 +2269,80 @@ class Metrician(Sampler):
             key:{'stack': None}
             for key in self.to_save
         }
+    _just_computed = {None:None}
+    def _i_results_computer(self, keyed_thts, obj):
+        hash_obj = self.hash_(obj)
+        if hash_obj in self._just_computed:
+            #print('--- JUST COMPUTED ---')
+            return self._just_computed[hash_obj]
+        
+        if keyed_thts['stack'] is None:
+            stack     = obj
+            mean_conv = obj
+            std_conv  = np.full_like(obj, np.nan)
+        else:
+            stack = np.dstack((
+                keyed_thts['stack'], obj
+            ))
+            mean_conv = np.dstack((
+                keyed_thts['mean_conv'],
+                np.nanmean(
+                    stack, axis=2, keepdims=True
+                )
+            ))
+            std_conv = np.dstack((
+                keyed_thts['std_conv'],
+                np.nanstd(
+                    stack, axis=2, keepdims=True, ddof=1
+                )
+            ))
+        st_mc_sc = stack, mean_conv, std_conv
+        self._just_computed = {
+            hash_obj: st_mc_sc
+        }
+        return st_mc_sc
+
+    _z_score_max = 7.
+    def _z_score_controler_say_no(self, thts_par):
+        """ Validate parameters estimates if none of those is at
+        a greater-than `self._z_score_max`-sigmas distance from
+        its running mean.
+        """
+        if thts_par['stack'] is None:
+            return False
+
+        st_, mc_, sc_ = self._i_results_computer(thts_par, self.thetas)
+        st , mc , sc  = st_[:,:,-1:], mc_[:,:,-1:], sc_[:,:,-1:]
+        z_score = np.abs(st - mc)/sc
+        if (z_score > self._z_score_max).any():
+            print(
+                'Warning: '
+                'One of the parameters is at a '
+                'greater-than %d-sigmas distance '
+                'from its running mean.'
+                '\n\t All resample-based outcomes are rejected.'
+                %self._z_score_max
+            )                  
+            return True
+        return False
+        
     def _save_i_results(self, thts):
-        objs_to_save = [
-            (key, getattr(self, 'thetas_%s'%key, self.thetas))
-            for key in self.to_save            
+        key, obj = 'par', self.thetas
+        st, mc, sc = self._i_results_computer(thts[key], obj)
+        thts[key]['stack']     = st
+        thts[key]['mean_conv'] = mc
+        thts[key]['std_conv']  = sc
+        
+        other_objs_to_save = [
+            (key, getattr(self, 'thetas_%s'%key))
+            for key in self.to_save if key != 'par'           
         ]
-        for key, obj in objs_to_save:
-            if thts[key]['stack'] is None:
-                thts[key]['stack']     = obj
-                thts[key]['mean_conv'] = obj
-                thts[key]['std_conv']  = np.full_like(obj, np.nan)
-            else:
-                stack = thts[key]['stack'] = np.dstack((
-                    thts[key]['stack'], obj
-                ))
-                thts[key]['mean_conv'] = np.dstack((
-                    thts[key]['mean_conv'],
-                    np.nanmean(
-                        stack, axis=2, keepdims=True
-                    )
-                ))
-                thts[key]['std_conv'] = np.dstack((
-                    thts[key]['std_conv'],
-                    np.nanstd(
-                        stack, axis=2, keepdims=True, ddof=1
-                    )
-                ))
+        for key, obj in other_objs_to_save:
+            st, mc, sc = self._i_results_computer(thts[key], obj)
+            thts[key]['stack']     = st
+            thts[key]['mean_conv'] = mc
+            thts[key]['std_conv']  = sc
+
     def _save_results(self, thts):
         for key, obj in thts.items():
             stack = obj['stack']
@@ -2552,8 +2600,8 @@ class Metrician(Sampler):
                 self.conv_charter(key, btd, jkd, htd, m='mean')
                 self.conv_charter(key, btd, jkd, m='std')
 
-        return bt_ 
-
+        return bt_
+        
     def _bt_run(self, **kws):
         thts = copy.deepcopy(self._thts_tmpl)
         s    = 0
@@ -2568,12 +2616,14 @@ class Metrician(Sampler):
                             u'n° {} over {}({})'.format(
                                 s, self._nb_resamples, nbs
                             ),
-                            end="\r"
+##                            end="\r"
                         )
             self._set_bt_env(**kws)
             if not self._maximized_conc_llik_object.success\
                and self.p>0:
-                nbs += 1    
+                nbs += 1
+            elif self._z_score_controler_say_no(thts['par']):
+                nbs += 1                
             else:
                 self._save_i_results(thts)            
             s += 1
