@@ -6,7 +6,7 @@ __authors__ = [
     "laurent.faucheux@hotmail.fr",
 ]
 
-__version__ = '0.1.52'
+__version__ = '0.1.53'
 
 __all__     = [
     'UniHasher',
@@ -1242,8 +1242,8 @@ class GaussianMLARIMA(SpDataObject):
 
     __hull_kwarger = lambda s,fc,O,u,c=None:{
         'x'          : s._up2n_line + 1,
-        'y1'         : s.hull_sides_computer(s.e, 'lo', O=O).flatten(),
-        'y2'         : s.hull_sides_computer(s.e, 'up', O=O).flatten(),
+        'y1'         : s.hull_sides_computer(s.XACF_u, 'lo', O=O).flatten(),
+        'y2'         : s.hull_sides_computer(s.XACF_u, 'up', O=O).flatten(),
         'where'      : None,
         'color'      : c or fc,
         'facecolor'  : fc,
