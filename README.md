@@ -62,14 +62,11 @@ Let's directly illustrate the main *raison d'être* of this package, i.e. which 
     saved in  C:\data\Columbus.out\ER{0}AR{0}MA{0}[RESID][(P)ACF].png
     
 `ER{0}AR{0}MA{0}[RESID][(P)ACF].png` looks like this
-<p align="center">
- <span>
-  <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="50%"/>
- </span>
- <span>
+
+<span>
+ <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="50%"/>
  <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5BHULLS%5D.png?raw=true" width="50%"/>
- </span> 
-</p>
+</span> 
 
 Be it in the ACF (upper dial) or in the PACF, we clearly have significant correlation at work through the lags 1, 2 and 4. Let's first think of it as global (thus considering the PACF) and go for an AR{1,2,4}.
 
