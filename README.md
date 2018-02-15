@@ -63,8 +63,8 @@ Let's directly illustrate the main *raison d'être* of this package, i.e. which 
     
 `ER{0}AR{0}MA{0}[RESID][(P)ACF].png` looks like this
 <p align="center">
- <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" style="float: left; width: 30%; margin-right: 1%; margin-bottom: 0.5em;"/>
- <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5BHULLS%5D.png?raw=true" style="float: left; width: 30%; margin-right: 1%; margin-bottom: 0.5em;"/>
+ <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" style="float: left; height: 15em; margin-right: 1%; margin-bottom: 0.5em;"/>
+ <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5BHULLS%5D.png?raw=true" style="float: left; height: 15em; margin-right: 1%; margin-bottom: 0.5em;"/>
  <p style="clear: both;">   
 </p>
 
