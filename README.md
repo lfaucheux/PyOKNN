@@ -56,16 +56,20 @@ We use [Anselin's Columbus OH 49 observation data set](https://nowosad.github.io
     ...     id_name   = 'POLYID',
     ... )
 
-Let's directly illustrate the main *raison d'être* of this package, i.e. which is about modelling the correlation structure of our OLS-like residuals. To do so, simply type
+Let's directly illustrate the main *raison d'être* of this package, i.e. which is about modelling residuals correlation structure. To do so, simply type
 
     >>> o.u_XACF_chart
     saved in  C:\data\Columbus.out\ER{0}AR{0}MA{0}[RESID][(P)ACF].png
     
-`ER{0}AR{0}MA{0}[RESID][(P)ACF].png` looks like this
+and
+    >>> o.u_hull_chart
+    saved in  C:\data\Columbus.out\ER{0}AR{0}MA{0}[RESID][HULLS].png
+    
+`ER{0}AR{0}MA{0}[RESID][(P)ACF].png` and `ER{0}AR{0}MA{0}[RESID][HULLS].png` look like this
 
 <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="425"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5BHULLS%5D.png?raw=true" width="425"/>
 
-Be it in the ACF (upper dial) or in the PACF, we clearly have significant correlation at work through the lags 1, 2 and 4. Let's first think of it as global (thus considering the PACF) and go for an AR{1,2,4}.
+Be it in the ACF (upper dial) or in the PACF, we clearly have significant dependences at work through the lags 1, 2 and 4. Let's first think of it as global (thus considering the PACF) and go for an AR{1,2,4}.
 
     >>> o.u_XACF_chart_of(AR_ks=[1, 2, 4])
     Optimization terminated successfully.
@@ -73,9 +77,11 @@ Be it in the ACF (upper dial) or in the PACF, we clearly have significant correl
              Iterations: 155
              Function evaluations: 292
     saved in  C:\data\Columbus.out\ER{0}AR{1,2,4}MA{0}[RESID][(P)ACF].png
-<p align="center">
- <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B1,2,4%7DMA%7B0%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="60%"/>
-</p>
+    >>> o.u_hull_chart
+    saved in  C:\data\Columbus.out\ER{0}AR{1,2,4}MA{0}[RESID][HULLS].png
+ 
+
+<img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B1,2,4%7DMA%7B0%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="425"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B1,2,4%7DMA%7B0%7D%5BRESID%5D%5BHULLS%5D.png?raw=true" width="425"/>
 
 or thinking those as local, let's go for a MA{1,2,4}. 
 
@@ -85,9 +91,10 @@ or thinking those as local, let's go for a MA{1,2,4}.
              Iterations: 144
              Function evaluations: 268
     saved in  C:\data\Columbus.out\ER{0}AR{0}MA{1,2,4}[RESID][(P)ACF].png
-<p align="center">
- <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="60%"/>
-</p>
+    >>> o.u_hull_chart
+    saved in  C:\data\Columbus.out\ER{0}AR{0}MA{1,2,4}[RESID][HULLS].png
+
+<img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="425"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D%5BRESID%5D%5BHULLS%5D.png?raw=true" width="425"/>
 
 Thinking of CRIME variable as cointegrated through space with INC and HOVAL, let's go for a (partial) difference whose structure superimpose to the lags 1, 2 and 4.
 
@@ -97,9 +104,10 @@ Thinking of CRIME variable as cointegrated through space with INC and HOVAL, let
              Iterations: 163
              Function evaluations: 304
     saved in  C:\Columbus.out\ER{1,2,4}AR{0}MA{0}[RESID][(P)ACF].png
-<p align="center">
- <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B1,2,4%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="60%"/>
-</p>
+    >>> o.u_hull_chart
+    saved in  C:\Columbus.out\ER{1,2,4}AR{0}MA{0}[RESID][HULLS].png
+
+<img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B1,2,4%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="425"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B1,2,4%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5BHULLS%5D.png?raw=true" width="425"/>
 
 
     
