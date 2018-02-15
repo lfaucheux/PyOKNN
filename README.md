@@ -58,7 +58,7 @@ We use [Anselin's Columbus OH 49 observation data set](https://nowosad.github.io
 
 Let's directly illustrate the main *raison d'être* of this package, i.e. which is about modelling the correlation structure of our OLS-like residuals. To do so, simply type
 
-    >>> o.XACF_chart_of_u
+    >>> o.u_XACF_chart
     saved in  C:\data\Columbus.out\ER{0}AR{0}MA{0}[RESID][(P)ACF].png
     
 `ER{0}AR{0}MA{0}[RESID][(P)ACF].png` looks like this
@@ -68,7 +68,7 @@ Let's directly illustrate the main *raison d'être* of this package, i.e. which 
 
 Be it in the ACF (upper dial) or in the PACF, we clearly have significant correlation at work through the lags 1, 2 and 4. Let's first think of it as global (thus considering the PACF) and go for an AR{1,2,4}.
 
-    >>> o.XACF_u_chart_of(AR_ks=[1, 2, 4])
+    >>> o.u_XACF_chart_of(AR_ks=[1, 2, 4])
     Optimization terminated successfully.
              Current function value: 108.789436
              Iterations: 155
@@ -80,7 +80,7 @@ Be it in the ACF (upper dial) or in the PACF, we clearly have significant correl
 
 or thinking those as local, let's go for a MA{1,2,4}. 
 
-    >>> o.XACF_u_chart_of(MA_ks=[1, 2, 4])
+    >>> o.u_XACF_chart_of(MA_ks=[1, 2, 4])
     Optimization terminated successfully.
              Current function value: 107.015463
              Iterations: 144
@@ -92,7 +92,7 @@ or thinking those as local, let's go for a MA{1,2,4}.
 
 Thinking of CRIME variable as cointegrated through space with INC and HOVAL, let's go for a (partial) difference whose structure superimpose to the lags 1, 2 and 4.
 
-    >>> o.XACF_u_chart_of(ER_ks=[1, 2, 4])
+    >>> o.u_XACF_chart_of(ER_ks=[1, 2, 4])
     Optimization terminated successfully.
              Current function value: 107.126738
              Iterations: 163
