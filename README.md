@@ -116,6 +116,55 @@ Thinking of CRIME variable as cointegrated through space with INC and HOVAL, let
 
 <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B1,2,4%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="50%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B1,2,4%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5BHULLS%5D.png?raw=true" width="50%"/>
 
+A little summary can be helpfull.
+
+    >>> o.summary()
+    ================================= PARS
+    \\\\ HAT ////  ER{0}AR{0}MA{0}  ER{0}AR{0}MA{1,2,4}  ER{0}AR{1,2,4}MA{0}  ER{1,2,4}AR{0}MA{0}
+    \beta_0              68.618961            63.418312            40.602532            59.163974
+    \beta_{HOVAL}        -0.273931            -0.290030            -0.261453            -0.251289
+    \beta_{INC}          -1.597311            -1.237462            -0.936830            -1.147231
+    \gamma_{1}                 NaN                  NaN                  NaN             0.106979
+    \gamma_{2}                 NaN                  NaN                  NaN             0.212151
+    \gamma_{4}                 NaN                  NaN                  NaN             0.377095
+    \lambda_{1}                NaN             0.233173                  NaN                  NaN
+    \lambda_{2}                NaN             0.303743                  NaN                  NaN
+    \lambda_{4}                NaN             0.390871                  NaN                  NaN
+    \rho_{1}                   NaN                  NaN             0.137684                  NaN
+    \rho_{2}                   NaN                  NaN             0.218272                  NaN
+    \rho_{4}                   NaN                  NaN             0.144365                  NaN
+    \sigma^2            130.758538            99.208994            90.023838            73.773795
+    ================================= CRTS
+    \\\\ HAT ////         ER{0}AR{0}MA{0}  ER{0}AR{0}MA{1,2,4}  ER{0}AR{1,2,4}MA{0}  ER{1,2,4}AR{0}MA{0}
+    llik                      -187.377239          -176.543452          -178.317424          -176.654726
+    HQC                        383.003506           369.489193           373.341761           369.711742
+    BIC                        386.525705           376.533591           380.386158           376.756140
+    AIC                        380.850244           365.182669           369.035237           365.405219
+    AICg                         5.627724             5.307978             5.386601             5.312519
+    pr^2                         0.552404             0.548456             0.542484             0.550022
+    pr^2 (pred)                  0.552404             0.548456             0.590133             0.550022
+    Sh's W                       0.977076             0.990134             0.949463             0.972979
+    Sh's Pr(>|W|)                0.449724             0.952490             0.035132             0.316830
+    Sh's W (pred)                0.977076             0.978415             0.969177             0.973051
+    Sh's Pr(>|W|) (pred)         0.449724             0.500748             0.224519             0.318861
+    BP's B                       7.900442             2.778268            20.419370             9.983489
+    BP's Pr(>|B|)                0.019250             0.249291             0.000037             0.006794
+    KB's K                       5.694088             2.723948             9.514668             6.721746
+    KB's Pr(>|K|)                0.058016             0.256155             0.008588             0.034705
+    Wh's w                      19.946008           -47.002224            24.266935          -167.615676
+    Wh's Pr(>|w|)                0.001279             1.000000             0.000193             1.000000
+    
+
+Given that the specification `ER{0}AR{0}MA{1,2,4}` has the minimum BIC, let's pursue with it and bootstrap-estimate all parameters' bias-corrected and accelerated (BCa) interval. 
+
+    >>> run_kwargs = {
+    ...     'plot_hist': True,  # Bootstrap distributions
+    ...     'plot_conv': True,  # Convergence plots
+    ...     'verbose'  : True,  # Just to know what is going on
+    ...     'MA_ks'    : [1, 2, 4] ,
+    ...     'nbsamples': 10000, # Number of resampling iterations
+    ... }
+    >>> o.PIs_computer(**run_kwargs)
 
     
 [ Forthcoming ] 
