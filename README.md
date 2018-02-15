@@ -74,6 +74,9 @@ Be it in the ACF (upper dial) or in the PACF, we clearly have significant correl
              Iterations: 155
              Function evaluations: 292
     saved in  C:\data\Columbus.out\ER{0}AR{1,2,4}MA{0}[RESID][(P)ACF].png
+<p align="center">
+ <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B1,2,4%7DMA%7B0%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="50%"/>
+</p>
 
     
 
