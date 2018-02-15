@@ -6,9 +6,11 @@ setup(
     packages = ['PyOKNN'],
     package_data={
         'PyOKNN': [
+            'examples/*',
             'data/tests/*',
             'data/tests/subfolder/*',
             'data/COLUMBUS/*',
+            'data/COLUMBUS.out/.szd/*',
             'data/COLUMBUS.out/.szd/*',
         ]
     },
