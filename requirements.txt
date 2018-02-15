@@ -1,0 +1,6 @@
+numpy>=1.14.0
+numdifftools>=0.9.20
+pandas>=0.22.0
+scipy>=1.0.0
+pysal>=1.14.3
+matplotlib

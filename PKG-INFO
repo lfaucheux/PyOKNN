@@ -1,0 +1,12 @@
+Metadata-Version: 1.1
+Name: PyOKNN
+Version: 0.1.5
+Summary: A spatial lag operator proposal implemented in Python: only the k-nearest neighbor (oknn).
+Home-page: https://github.com/lfaucheux/PyOKNN
+Author: Laurent Faucheux
+Author-email: laurent.faucheux@hotmail.fr
+License: UNKNOWN
+Download-URL: https://github.com/lfaucheux/PyOKNN/archive/0.1.5.tar.gz
+Description: UNKNOWN
+Keywords: spatial econometrics,weight matrix,oknn specification
+Platform: UNKNOWN
