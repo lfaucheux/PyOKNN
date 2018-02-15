@@ -6,7 +6,7 @@ __authors__ = [
     "laurent.faucheux@hotmail.fr",
 ]
 
-__version__ = '0.1.5'
+__version__ = '0.1.52'
 
 __all__     = [
     'UniHasher',
@@ -24,6 +24,7 @@ __all__     = [
     'Presenter',
     '__version__',
     '__authors__',
+    'npopts',
 ]
 
 
@@ -450,7 +451,7 @@ class DataObject(DataGetter):
             )
         ]
         if os.path.dirname(elig_sdirs[1]) == os.path.dirname(self._data_dir):
-            return elig_sdirs[1]
+            return os.path.join(elig_sdirs[1], '.szd')
         return elig_sdirs[0]
 
     @Cache._property
@@ -1271,14 +1272,19 @@ class GaussianMLARIMA(SpDataObject):
         else:
             plt.legend(**lkws)
 
-
-
     @property
-    def hull_chart_of_e(self):
-        self.hull_charter(self.e)
+    def u_hull_chart(self):
+        self.hull_charter(
+            self.XACF_u,
+            save_fig=True
+        )
 
-    def hull_charter(self, e, save_fig=True):
-        """ Makes the hull chart of `e`. The idea behind this chart is about
+    def u_hull_chart_of(self, **kws):
+        self.from_scratch(**kws)
+        self.u_hull_chart
+
+    def hull_charter(self, u, save_fig=True):
+        """ Makes the hull chart of `u`. The idea behind this chart is about
         pinpointing graphically space-dependent trend and/or variance.
         """
         
@@ -1322,14 +1328,14 @@ class GaussianMLARIMA(SpDataObject):
         # -- residuals
         plt.plot(
             self._k_domain + 1,
-            e,
+            u,
             color     = 'black',
             marker    = 'o' if self.n < 100 else '.',
             linestyle = 'dashed' if self.n < 100 else 'none'
         )
         
         # -- Upper and lower bounds
-        max_ = 1.05*np.max(np.abs(e))
+        max_ = 1.05*np.max(np.abs(u))
         plt.axis((1, self.n, -max_, max_))
 
         # -- Legend
@@ -2013,11 +2019,15 @@ class XACFMaker(GaussianMLARIMA):
         return stats
 
     @property
-    def XACF_chart_of_u(self):
-        return self.XACF_charter(
+    def u_XACF_chart(self):
+        self.XACF_charter(
             u = self.XACF_u,
             save_fig = True
         )
+
+    def u_XACF_chart_of(self, **kws):
+        self.from_scratch(**kws)
+        self.u_XACF_chart
 
     def XACF_charter(self, save_fig=False, **kwargs):
         """ Plots both ACFs and PACFs following formats defined
