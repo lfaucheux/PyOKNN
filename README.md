@@ -90,6 +90,18 @@ or thinking those as local, let's go for a MA{1,2,4}.
  <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="60%"/>
 </p>
 
+Thinking of CRIME variable as cointegrated through space with INC and HOVAL, let's go for a (partial) difference whose structure superimpose to the lags 1, 2 and 4.
+
+    >>> o.XACF_u_chart_of(ER_ks=[1, 2, 4])
+    Optimization terminated successfully.
+             Current function value: 107.126738
+             Iterations: 163
+             Function evaluations: 304
+    saved in  C:\Columbus.out\ER{1,2,4}AR{0}MA{0}[RESID][(P)ACF].png
+<p align="center">
+ <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B1,2,4%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="60%"/>
+</p>
+
 
     
 [ Forthcoming ] 
