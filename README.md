@@ -36,6 +36,12 @@ We are going to use a package management system used to install and manage softw
 
     pip install PyOKNN
 
+Or using a non python-builtin approach, namely [git](https://git-scm.com/downloads),
+
+    git clone git://github.com/lfaucheux/PyOKNN.git
+    cd PyOKNN
+    python setup.py install
+
 ## Example usage:
 The example that follows is done via the Python Shell. Let's first import the module `PyOKNN`.
 
