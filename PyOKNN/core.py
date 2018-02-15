@@ -6,7 +6,7 @@ __authors__ = [
     "laurent.faucheux@hotmail.fr",
 ]
 
-__version__ = '0.1.53'
+__version__ = '0.1.54'
 
 __all__     = [
     'UniHasher',
@@ -939,6 +939,7 @@ class GaussianMLARIMA(SpDataObject):
         self._nd_step   = kwargs.get('nd_step', 1.e-6)
         self._nd_method = kwargs.get('nd_method', 'central')
         self._verbose   = kwargs.get('verbose', True)
+        self._thts_collection = {}
 
 ##    def from_scratch(self):
 ##        """ Cleans cache from all objects that are not permanent
@@ -947,6 +948,20 @@ class GaussianMLARIMA(SpDataObject):
 ##        like results.
 ##        """
 ##        super(GaussianMLARIMA, self).from_scratch()
+
+    def default_thts(self):
+        return {
+            'par':{'stack':self.thetas},
+            'crt':{'stack':self.thetas_crt},
+        }
+    _mid2pnames = {}
+    def _thts_collector(self, **kws):
+        key  = kws.get('key', 'hat')
+        thts = kws.get('thts', self.default_thts)
+        if key not in self._thts_collection:
+            self._thts_collection[key] = {}
+        self._thts_collection[key][self.model_id] = thts
+        self._mid2pnames[self.model_id] = self.par_names
 
     @Cache._property_tmp
     def par_names(self):
@@ -1278,6 +1293,7 @@ class GaussianMLARIMA(SpDataObject):
             self.XACF_u,
             save_fig=True
         )
+        self._thts_collector()
 
     def u_hull_chart_of(self, **kws):
         self.from_scratch(**kws)
@@ -2024,6 +2040,7 @@ class XACFMaker(GaussianMLARIMA):
             u = self.XACF_u,
             save_fig = True
         )
+        self._thts_collector()
 
     def u_XACF_chart_of(self, **kws):
         self.from_scratch(**kws)
@@ -2221,7 +2238,6 @@ class Metrician(Sampler):
     def __init__(self, **kwargs):
         super(Metrician, self).__init__(**kwargs)
         self._nb_resamples = int(kwargs.get('nbsamples', 2000))
-        self.thts_collection = {}
         self.to_save = [
             'par', 'crt',
 ##          'cov', 'stt', #[!!!] Too time-consuming. stt needs cov's diagonal.
@@ -2235,13 +2251,6 @@ class Metrician(Sampler):
             'cov':self.par_names,
             'stt':self.par_names,
         }
-
-    _mid2pnames = {}
-    def _thts_collector(self, key, thts):
-        if key not in self.thts_collection:
-            self.thts_collection[key] = {}
-        self.thts_collection[key][self.model_id] = thts
-        self._mid2pnames[self.model_id] = self.par_names
 
     def _run(self):
         self.thetas
@@ -2355,7 +2364,9 @@ class Metrician(Sampler):
                 lambda:self._hat_run(**kws),
                 self._tempo
             )
-        self._thts_collector('hat', self._tempo[_key_])
+        self._thts_collector(
+            key='hat', thts=self._tempo[_key_]
+        )
         return self._tempo[_key_]
     def _hat_run(self, **kws):
         thts = copy.deepcopy(self._thts_tmpl)
@@ -2405,7 +2416,9 @@ class Metrician(Sampler):
                 lambda:self._jk_run(**kws),
                 self._tempo
             )
-        self._thts_collector('jk', self._tempo[_key_])
+        self._thts_collector(
+            key='jk', thts=self._tempo[_key_]
+        )
         return self._tempo[_key_]        
     def _jk_run(self, **kws):
         thts = copy.deepcopy(self._thts_tmpl)
@@ -2531,10 +2544,10 @@ class Metrician(Sampler):
 
         # -- Plot convergences
         bt_ = self._tempo[_key_]
+        self._thts_collector(key='bt', thts=bt_)
         if kws.get('plot_conv', True):
             jk_ = self.jk_run(**kws)
             ht_ = self.hat_run(**kws)
-            self._thts_collector('bt', bt_)
             for key, btd in sorted(bt_.items()):
                 jkd = jk_[key]
                 htd = ht_[key]
@@ -3092,7 +3105,7 @@ class Presenter(PIntervaler):
         for obj in self.to_save:
             print(33*"=", '%sS'%obj.upper())
 
-            for key, ided_models in self.thts_collection.items():
+            for key, ided_models in self._thts_collection.items():
                 labeled_objs = []
 
                 ided_models_items = sorted(
