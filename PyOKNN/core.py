@@ -6,7 +6,7 @@ __authors__ = [
     "laurent.faucheux@hotmail.fr",
 ]
 
-__version__ = '0.1.55'
+__version__ = '0.1.56'
 
 __all__     = [
     'UniHasher',
@@ -51,6 +51,9 @@ import re
 
 npopts = lambda p,b,w:np.set_printoptions(
     precision=p, suppress=b, linewidth=w,
+)
+pdopts = lambda w:pd.set_option(
+    'display.width', int(w)
 )
 
 #*****************************************************************************#
@@ -941,14 +944,6 @@ class GaussianMLARIMA(SpDataObject):
         self._verbose   = kwargs.get('verbose', True)
         self._thts_collection = {}
 
-##    def from_scratch(self):
-##        """ Cleans cache from all objects that are not permanent
-##        relatively to a given dataset. One consequence of this is that
-##        re-executing any instance's methode from scrath returns ols
-##        like results.
-##        """
-##        super(GaussianMLARIMA, self).from_scratch()
-
     @property
     def default_thts(self):
         return {
@@ -958,7 +953,7 @@ class GaussianMLARIMA(SpDataObject):
     _mid2pnames = {}
     def _thts_collector(self, **kws):
         key  = kws.get('key', 'hat')
-        thts = kws.get('thts', self.default_thts)
+        thts = kws.get('thts') or self.default_thts
         if key not in self._thts_collection:
             self._thts_collection[key] = {}
         self._thts_collection[key][self.model_id] = thts
@@ -3125,5 +3120,6 @@ class Presenter(PIntervaler):
 
 if __name__ == '__main__':
     npopts(8, True, 5e4)
+    pdopts(5e4)
     import doctest
     doctest.testmod(verbose=False)
