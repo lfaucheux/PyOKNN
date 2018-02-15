@@ -6,7 +6,7 @@ __authors__ = [
     "laurent.faucheux@hotmail.fr",
 ]
 
-__version__ = '0.1.54'
+__version__ = '0.1.55'
 
 __all__     = [
     'UniHasher',
@@ -949,6 +949,7 @@ class GaussianMLARIMA(SpDataObject):
 ##        """
 ##        super(GaussianMLARIMA, self).from_scratch()
 
+    @property
     def default_thts(self):
         return {
             'par':{'stack':self.thetas},
