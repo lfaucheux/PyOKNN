@@ -66,7 +66,15 @@ Let's directly illustrate the main *raison d'être* of this package, i.e. which 
  <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="50%"/>
 </p>
 
-Be it in the ACF (upper dial) or in the PACF, we clearly have significant correlation at lags 1, 2 and 4. Let's first go for an AR{1,2,4}.
+Be it in the ACF (upper dial) or in the PACF, we clearly have significant correlation at lags 1, 2 and 4. Let's first think of it as global (thus considering the PACF) and go for an AR{1,2,4}.
+
+    >>> o.XACF_u_chart_of(AR_ks=[1, 2, 4])
+    Optimization terminated successfully.
+             Current function value: 108.789436
+             Iterations: 155
+             Function evaluations: 292
+    saved in  C:\data\Columbus.out\ER{0}AR{1,2,4}MA{0}[RESID][(P)ACF].png
+
     
 
 
