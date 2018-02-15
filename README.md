@@ -34,7 +34,7 @@
 
 We are going to use a package management system used to install and manage software packages written in Python, namely [pip](https://en.wikipedia.org/wiki/Pip_(package_manager)). Open a session in your OS shell prompt and type
 
-    pip install PyOKNN
+    pip install pyoknn
 
 Or using a non python-builtin approach, namely [git](https://git-scm.com/downloads),
 
@@ -49,11 +49,23 @@ The example that follows is done via the Python Shell. Let's first import the mo
 
 We use [Anselin's Columbus OH 49 observation data set](https://nowosad.github.io/spData/reference/columbus.html). Since the data set is included in PyOKNN, there is no need to mention the path directory.
 
-    >>> ok.Presenter(
+    >>> o = ok.Presenter(
     ...     data_name = 'columbus',
     ...     y_name    = 'CRIME',
     ...     x_names   = ['INC', 'HOVAL'],
     ...     id_name   = 'POLYID',
     ... )
+
+Let's directly illustrate the main *raison d'être* of this package, i.e. which is about modelling the correlation structure of our OLS-like residuals. To do so, simply type
+
+    >>> o.XACF_chart_of_u
+    saved in  C:\data\Columbus.out\ER{0}AR{0}MA{0}[RESID][(P)ACF].png
+    
+`ER{0}AR{0}MA{0}[RESID][(P)ACF].png` looks like this
+
+
+    
+
+
     
 [ Forthcoming ] 
