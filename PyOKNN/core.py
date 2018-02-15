@@ -6,9 +6,11 @@ __authors__ = [
     "laurent.faucheux@hotmail.fr",
 ]
 
-__version__ = '0.1.56'
+__version__ = '0.1.6'
 
 __all__     = [
+    '__authors__',
+    '__version__',
     'UniHasher',
     'Cache',
     'Serializer',
@@ -22,11 +24,9 @@ __all__     = [
     'Metrician',
     'PIntervaler',
     'Presenter',
-    '__version__',
-    '__authors__',
     'npopts',
+    'pdopts',
 ]
-
 
 import warnings ; warnings.filterwarnings("ignore")
 import matplotlib.patches as mpa
@@ -62,7 +62,6 @@ pdopts = lambda w:pd.set_option(
 ##    ╚═╝┘└┘┴╩ ╩┴ ┴└─┘┴ ┴└─┘┴└─
 _hash_ = lambda o:hh.md5(o).digest().encode("base64")
 class UniHasher(object):
-
     @staticmethod
     def hash_(o):
         r""" Returns a hash of any object.
@@ -942,6 +941,7 @@ class GaussianMLARIMA(SpDataObject):
         self._nd_step   = kwargs.get('nd_step', 1.e-6)
         self._nd_method = kwargs.get('nd_method', 'central')
         self._verbose   = kwargs.get('verbose', True)
+        self._opverbose = kwargs.get('opverbose', True)
         self._thts_collection = {}
 
     @property
@@ -1408,8 +1408,8 @@ class GaussianMLARIMA(SpDataObject):
         ("BP's Pr(>|B|)"        , None),
         ("KB's K"               , 'koenker_bassett'),
         ("KB's Pr(>|K|)"        , None),
-        ("Wh's w"               , 'white'),
-        ("Wh's Pr(>|w|)"        , None),
+##        ("Wh's w"               , 'white'),
+##        ("Wh's Pr(>|w|)"        , None),
     ]   
     @Cache._property_tmp
     def llik(self):
@@ -1485,11 +1485,11 @@ class GaussianMLARIMA(SpDataObject):
         return self._dict2arr_frmt(ps.spreg.diagnostics.koenker_bassett(
             self._ps_testable_inst
         ), 'kb')
-    @Cache._property_tmp
-    def white(self):
-        return self._dict2arr_frmt(ps.spreg.diagnostics.white(
-            self._ps_testable_inst
-        ), 'wh')
+##    @Cache._property_tmp
+##    def white(self):
+##        return self._dict2arr_frmt(ps.spreg.diagnostics.white(
+##            self._ps_testable_inst
+##        ), 'wh')
 
     @Cache._property_tmp
     def thetas_crt(self):
@@ -1684,15 +1684,24 @@ class GaussianMLARIMA(SpDataObject):
 
     @Cache._property_tmp
     def _maximized_conc_llik_object(self):
-        return sc.optimize.minimize(
-            x0      = self.initial_guesses_as_list,
-            fun     = lambda xN : -self._conc_llik_computer(xN),
-            tol     = self._tolerance,
-            method  = 'Nelder-mead',
-            options = {
-                'disp': self.p,
-            },
-        )        
+        x0 = self.initial_guesses_as_list
+        try:
+            return sc.optimize.minimize(
+                x0      = x0,
+                fun     = lambda xN : -self._conc_llik_computer(xN),
+                #tol     = self._tolerance,
+                method  = 'Nelder-mead',
+                options = {
+                    'disp' : self.p and self._opverbose,
+                },
+            )
+        except Exception as exc:
+            print(exc.message)
+            return type(
+                'optimerr',
+                (object,),
+                {'success':False, 'x':x0}
+            )
 
     def _conc_llik_computer(self, _gammas_rhos_lambdas):
         _ysri, _xri, _G, _S, _Ri, _ = self._yNx_filterer(
@@ -2307,6 +2316,7 @@ class Metrician(Sampler):
         ...     x_names   = ['INC', 'HOVAL'],
         ...     id_name   = 'POLYID',
         ...     verbose   = False,
+        ...     opverbose = True,
         ... )
 
         Let's first make an example with no spatial parameters.
@@ -2336,15 +2346,15 @@ class Metrician(Sampler):
         >>> o.thetas_cov
         Optimization terminated successfully.
                  Current function value: 111.656163
-                 Iterations: 181
-                 Function evaluations: 343
-        array([[ 54.48408954,  -1.84514882,   0.00344507,   0.12953073,  -0.81525254,   0.62136364,  28.33742349],
-               [ -1.84514882,   0.12775492,  -0.01942113,   0.00683333,   0.02400884,  -0.03171703,  -0.89767139],
-               [  0.00344507,  -0.01942113,   0.0101466 ,   0.00026957,  -0.00385644,   0.01133076,   0.11805396],
-               [  0.12953073,   0.00683333,   0.00026957,   0.02038802,  -0.00723211,   0.00139802,   0.09169272],
-               [ -0.81525254,   0.02400884,  -0.00385644,  -0.00723211,   0.01954738,  -0.01995423,  -0.63174929],
-               [  0.62136364,  -0.03171703,   0.01133076,   0.00139802,  -0.01995423,   0.05768091,   0.61296019],
-               [ 28.33742349,  -0.89767139,   0.11805396,   0.09169272,  -0.63174929,   0.61296019, 484.42832059]])
+                 Iterations: 138
+                 Function evaluations: 254
+        array([[ 54.4809296 ,  -1.84502206,   0.00342826,   0.12955141,  -0.81519065,   0.62122773,  28.33119842],
+               [ -1.84502206,   0.12774818,  -0.01942022,   0.00683215,   0.0240067 ,  -0.03171117,  -0.89739894],
+               [  0.00342826,  -0.01942022,   0.01014639,   0.0002697 ,  -0.00385608,   0.01133015,   0.11799748],
+               [  0.12955141,   0.00683215,   0.0002697 ,   0.02038757,  -0.00723236,   0.0013995 ,   0.09174917],
+               [ -0.81519065,   0.0240067 ,  -0.00385608,  -0.00723236,   0.0195459 ,  -0.01995175,  -0.63160178],
+               [  0.62122773,  -0.03171117,   0.01133015,   0.0013995 ,  -0.01995175,   0.05767519,   0.61264511],
+               [ 28.33119842,  -0.89739894,   0.11799748,   0.09174917,  -0.63160178,   0.61264511, 484.41122657]])
 
         NB: Covariance matrices (components) are not subject to bootstrapping
          for performance reasons. This implies computing `self.obs_fisher_matrix`
@@ -2496,16 +2506,14 @@ class Metrician(Sampler):
                [ 0.28522319],
                [ 0.0869042 ],
                [ 0.0869042 ],
-               [ 0.0169616 ],
-               [ 0.2566856 ],
-               [ 0.01716561],
-               [ 0.2590324 ],
+               [ 0.49132822],
+               [ 0.50000291],
+               [ 0.48874503],
+               [ 0.50002499],
                [ 2.83002401],
                [ 0.28241245],
                [ 2.33592783],
-               [ 0.27327164],
-               [ 3.76069289],
-               [ 0.28922723]])
+               [ 0.27327164]])
         >>> bt_results['crt']['mean']
         array([[-184.75829442],
                [ 387.18638126],
@@ -2514,16 +2522,14 @@ class Metrician(Sampler):
                [   5.71308888],
                [   0.55807297],
                [   0.55807297],
-               [   0.96413927],
-               [   0.27281475],
-               [   0.96407787],
-               [   0.27402976],
+               [   0.50435712],
+               [   0.4953    ],
+               [   0.51187232],
+               [   0.5001    ],
                [   2.20559647],
                [   0.48927259],
                [   1.94062635],
-               [   0.51915986],
-               [   4.71163651],
-               [   0.55415355]])
+               [   0.51915986]])
 
         NB : the forthcoming Presenter class has methods which displays results
         in a more intelligible fashion.
@@ -2554,21 +2560,26 @@ class Metrician(Sampler):
 
     def _bt_run(self, **kws):
         thts = copy.deepcopy(self._thts_tmpl)
-        for s in range(self._nb_resamples):
+        s    = 0
+        nbs  = self._nb_resamples
+        while s<nbs:
             self._bt_s = s
             if kws.get('verbose', False):
                 if self._verbose:
                     if s%10 == 0:
                         print(
                             u'[BT~proc] resampling/seed '
-                            u'n° {} over {}'.format(
-                                s, self._nb_resamples,
+                            u'n° {} over {}({})'.format(
+                                s, self._nb_resamples, nbs
                             ),
                             end="\r"
                         )
             self._set_bt_env(**kws)
-            self._run()
-            self._save_i_results(thts)
+            if not self._maximized_conc_llik_object.success:
+                nbs += 1    
+            else:
+                self._save_i_results(thts)            
+            s += 1
         self._save_results(thts)            
         return thts
 
@@ -3015,23 +3026,21 @@ class Presenter(PIntervaler):
         ... )
         >>> labeled_criteria
         \\\\ HAT ////         ER{0}AR{1}MA{4,6}
-        llik                        -175.498634
-        HQC                          367.476524
-        BIC                          374.520922
-        AIC                          363.170000
-        AICg                           5.266903
-        pr^2                           0.544721
-        pr^2 (pred)                    0.577244
-        Sh's W                         0.968770
-        Sh's Pr(>|W|)                  0.216237
-        Sh's W (pred)                  0.945628
-        Sh's Pr(>|W|) (pred)           0.024649
-        BP's B                         3.225397
-        BP's Pr(>|B|)                  0.199349
-        KB's K                         1.892857
-        KB's Pr(>|K|)                  0.388125
-        Wh's w                       -75.566033
-        Wh's Pr(>|w|)                  1.000000
+        llik                      -1.754986e+02
+        HQC                        3.674765e+02
+        BIC                        3.745209e+02
+        AIC                        3.631700e+02
+        AICg                       5.266903e+00
+        pr^2                       5.447215e-01
+        pr^2 (pred)                5.772440e-01
+        Sh's W                     1.430368e-02
+        Sh's Pr(>|W|)              2.010151e-16
+        Sh's W (pred)              1.000000e+00
+        Sh's Pr(>|W|) (pred)       1.000000e+00
+        BP's B                     3.225397e+00
+        BP's Pr(>|B|)              1.993489e-01
+        KB's K                     1.892857e+00
+        KB's Pr(>|K|)              3.881247e-01
         """
         return {
             'par':lambda ylab, thts, key='stack':self.__labeler(
@@ -3080,23 +3089,21 @@ class Presenter(PIntervaler):
         \sigma^2            130.758538       102.143690          85.066386
         ================================= CRTS
         \\\\ HAT ////         ER{0}AR{0}MA{0}  ER{0}AR{1}MA{0}  ER{0}AR{1}MA{4,6}
-        llik                      -187.377239      -182.193752        -175.498634
-        HQC                        383.003506       375.431252         367.476524
-        BIC                        386.525705       380.127517         374.520922
-        AIC                        380.850244       372.560236         363.170000
-        AICg                         5.627724         5.458540           5.266903
-        pr^2                         0.552404         0.548625           0.544721
-        pr^2 (pred)                  0.552404         0.588923           0.577244
-        Sh's W                       0.977076         0.966407           0.968770
-        Sh's Pr(>|W|)                0.449724         0.173524           0.216237
-        Sh's W (pred)                0.977076         0.978610           0.945628
-        Sh's Pr(>|W|) (pred)         0.449724         0.508454           0.024649
-        BP's B                       7.900442        15.168577           3.225397
-        BP's Pr(>|B|)                0.019250         0.000508           0.199349
-        KB's K                       5.694088         8.368048           1.892857
-        KB's Pr(>|K|)                0.058016         0.015237           0.388125
-        Wh's w                      19.946008        24.299126         -75.566033
-        Wh's Pr(>|w|)                0.001279         0.000190           1.000000
+        llik                      -187.377239      -182.193752      -1.754986e+02
+        HQC                        383.003506       375.431252       3.674765e+02
+        BIC                        386.525705       380.127517       3.745209e+02
+        AIC                        380.850244       372.560236       3.631700e+02
+        AICg                         5.627724         5.458540       5.266903e+00
+        pr^2                         0.552404         0.548625       5.447215e-01
+        pr^2 (pred)                  0.552404         0.588923       5.772440e-01
+        Sh's W                       1.000000         1.000000       1.430368e-02
+        Sh's Pr(>|W|)                1.000000         1.000000       2.010151e-16
+        Sh's W (pred)                1.000000         1.000000       1.000000e+00
+        Sh's Pr(>|W|) (pred)         1.000000         1.000000       1.000000e+00
+        BP's B                       7.900442        15.168577       3.225397e+00
+        BP's Pr(>|B|)                0.019250         0.000508       1.993489e-01
+        KB's K                       5.694088         8.368048       1.892857e+00
+        KB's Pr(>|K|)                0.058016         0.015237       3.881247e-01
         """
         for obj in self.to_save:
             print(33*"=", '%sS'%obj.upper())
