@@ -88,9 +88,9 @@ Be it in the ACF (upper dial) or in the PACF, we clearly have significant depend
     saved in  C:\data\Columbus.out\ER{0}AR{1,2,4}MA{0}[RESID][HULLS].png
  
 
-<img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B1,2,4%7DMA%7B0%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="425"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B1,2,4%7DMA%7B0%7D%5BRESID%5D%5BHULLS%5D.png?raw=true" width="425"/>
+<img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B1,2,4%7DMA%7B0%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="50%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B1,2,4%7DMA%7B0%7D%5BRESID%5D%5BHULLS%5D.png?raw=true" width="50%"/>
 
-or thinking those as local, let's go for a MA{1,2,4}. 
+or thinking of those as local, let's go for a MA{1,2,4}. 
 
     >>> o.u_XACF_chart_of(MA_ks=[1, 2, 4])
     Optimization terminated successfully.
@@ -101,9 +101,9 @@ or thinking those as local, let's go for a MA{1,2,4}.
     >>> o.u_hull_chart
     saved in  C:\data\Columbus.out\ER{0}AR{0}MA{1,2,4}[RESID][HULLS].png
 
-<img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="425"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D%5BRESID%5D%5BHULLS%5D.png?raw=true" width="425"/>
+<img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="50%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D%5BRESID%5D%5BHULLS%5D.png?raw=true" width="50%"/>
 
-Thinking of CRIME variable as cointegrated through space with INC and HOVAL, let's go for a (partial) difference whose structure superimpose to the lags 1, 2 and 4.
+Thinking of CRIME variable as cointegrated through space with INC and HOVAL, let's go for a (partial) difference whose structure is superimposed to the lags 1, 2 and 4.
 
     >>> o.u_XACF_chart_of(ER_ks=[1, 2, 4])
     Optimization terminated successfully.
@@ -114,7 +114,7 @@ Thinking of CRIME variable as cointegrated through space with INC and HOVAL, let
     >>> o.u_hull_chart
     saved in  C:\Columbus.out\ER{1,2,4}AR{0}MA{0}[RESID][HULLS].png
 
-<img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B1,2,4%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="425"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B1,2,4%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5BHULLS%5D.png?raw=true" width="425"/>
+<img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B1,2,4%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="50%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B1,2,4%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5BHULLS%5D.png?raw=true" width="50%"/>
 
 
     
