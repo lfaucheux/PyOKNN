@@ -940,8 +940,8 @@ class GaussianMLARIMA(SpDataObject):
         self._nd_order  = kwargs.get('nd_order', 3.)
         self._nd_step   = kwargs.get('nd_step', 1.e-6)
         self._nd_method = kwargs.get('nd_method', 'central')
-        self._verbose   = kwargs.get('verbose', True)
-        self._opverbose = kwargs.get('opverbose', True)
+        self.verbose   = kwargs.get('verbose', True)
+        self.opverbose = kwargs.get('opverbose', True)
         self._thts_collection = {}
 
     @property
@@ -1247,7 +1247,7 @@ class GaussianMLARIMA(SpDataObject):
             ).translate(None, '|\_')
         )
         plt.savefig(ffname, **figconfs)
-        if self._verbose:
+        if self.verbose:
             print('saved in ',os.path.abspath(ffname))
         return ffname
 
@@ -1692,7 +1692,7 @@ class GaussianMLARIMA(SpDataObject):
                 #tol     = self._tolerance,
                 method  = 'Nelder-mead',
                 options = {
-                    'disp' : self.p and self._opverbose,
+                    'disp' : self.p and self.opverbose,
                 },
             )
         except Exception as exc:
@@ -2420,7 +2420,7 @@ class Metrician(Sampler):
         return self._tempo[_key_]
     def _hat_run(self, **kws):
         thts = copy.deepcopy(self._thts_tmpl)
-        if self._verbose:
+        if self.verbose:
             print(u'[HAT~proc]')
         self._run()
         self._save_i_results(thts)
@@ -2474,7 +2474,7 @@ class Metrician(Sampler):
         thts = copy.deepcopy(self._thts_tmpl)
         for i in self._up2n_line:
             self._jk_i = i
-            if self._verbose:
+            if self.verbose:
                 print(u'[JK~proc] removed individual {} n° {} over {}'.format(
                     self.geoids[i],
                     i+1,
@@ -2608,16 +2608,15 @@ class Metrician(Sampler):
         nbs  = self._nb_resamples
         while s<nbs:
             self._bt_s = s
-            if kws.get('verbose', False):
-                if self._verbose:
-                    if s%10 == 0:
-                        print(
-                            u'[BT~proc] resampling/seed '
-                            u'n° {} over {}({})'.format(
-                                s, self._nb_resamples, nbs
-                            ),
-##                            end="\r"
-                        )
+            if self.verbose:
+                if s%10 == 0:
+                    print(
+                        u'[BT~proc] resampling/seed '
+                        u'n° {} over {}({})'.format(
+                            s, self._nb_resamples, nbs
+                        ),
+                        end="\r"*(not self.opverbose)
+                    )
             self._set_bt_env(**kws)
             if not self._maximized_conc_llik_object.success\
                and self.p>0:
@@ -2750,10 +2749,9 @@ class PIntervaler(Metrician):
     @staticmethod
     def A_computer(jk_dv):
         """ Returns the acceleration constant that corrects for the dependence
-        on the parameter of the variance of the tranformed value of `ht_`. It
-        relates to the skewness of the sampling distribution of the estimator
-        of the quantity of interest. The (simple) method employed below relies
-        the jackknife method.
+        on the parameter of the variance of the tranformed value of `ht_`.
+        It is proportional to the skewness of the bootstrap distribution. The
+        (simple) method employed below relies the jackknife method.
 
         Example
         -------
@@ -2828,12 +2826,13 @@ class PIntervaler(Metrician):
         ...     x_names   = ['INC', 'HOVAL'],
         ...     id_name   = 'POLYID',
         ...     nbsamples = 10000,
+        ...     verbose   = False,
+        ...     opverbose = False,
         ... )
         >>> o.type_I_err = .05
         >>> run_kwargs = {
         ...     'plot_hist': False,
         ...     'plot_conv': False,
-        ...     'verbose'  : True,
         ... }
         >>> results = o.PIs_computer(**run_kwargs)
         >>> parameters_related_results = results['par']
