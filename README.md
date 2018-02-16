@@ -150,17 +150,17 @@ A little summary can be helpfull.
     BP's B                       7.900442             2.778268            20.419370             9.983489
     BP's Pr(>|B|)                0.019250             0.249291             0.000037             0.006794
     KB's K                       5.694088             2.723948             9.514668             6.721746
-    KB's Pr(>|K|)                0.058016             0.256155             0.008588             0.034705
-    Wh's w                      19.946008           -47.002224            24.266935          -167.615676
-    Wh's Pr(>|w|)                0.001279             1.000000             0.000193             1.000000
-    
+    KB's Pr(>|K|)                0.058016             0.256155             0.008588             0.034705    
 
 Given that the specification `ER{0}AR{0}MA{1,2,4}` has the minimum BIC, let's pursue with it and bootstrap-estimate all parameters' bias-corrected and accelerated (BCa) interval. 
 
+    >>> o.verbose   = True  # Displays progression
+    >>> o.opverbose = False # Hide optimization messages.
     >>> run_kwargs = {
     ...     'plot_hist': True,  # Bootstrap distributions
     ...     'plot_conv': True,  # Convergence plots
-    ...     'verbose'  : True,  # Just to know what is going on
+    ...     'verbose'  : True,  # To check progression
+    ...     'opverbose': True,  # To check progression
     ...     'MA_ks'    : [1, 2, 4] ,
     ...     'nbsamples': 10000, # Number of resampling iterations
     ... }
