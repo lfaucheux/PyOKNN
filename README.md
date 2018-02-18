@@ -54,7 +54,10 @@ We use [Anselin's Columbus OH 49 observation data set](https://nowosad.github.io
     ...     y_name    = 'CRIME',
     ...     x_names   = ['INC', 'HOVAL'],
     ...     id_name   = 'POLYID',
+    ...     verbose   = True,
+    ...     opverbose = True,
     ... )
+
 
 Let's directly illustrate the main *raison d'être* of this package, i.e. which is about modelling residuals correlation structure. To do so, simply type
 
@@ -81,8 +84,8 @@ Be it in the ACF (upper dial) or in the PACF, we clearly have significant depend
     >>> o.u_XACF_chart_of(AR_ks=[1, 2, 4])
     Optimization terminated successfully.
              Current function value: 108.789436
-             Iterations: 155
-             Function evaluations: 292
+             Iterations: 177
+             Function evaluations: 370
     saved in  C:\data\Columbus.out\ER{0}AR{1,2,4}MA{0}[RESID][(P)ACF].png
     >>> o.u_hull_chart
     saved in  C:\data\Columbus.out\ER{0}AR{1,2,4}MA{0}[RESID][HULLS].png
@@ -95,8 +98,8 @@ or thinking of those as local, let's go for a MA{1,2,4}.
     >>> o.u_XACF_chart_of(MA_ks=[1, 2, 4])
     Optimization terminated successfully.
              Current function value: 107.015463
-             Iterations: 144
-             Function evaluations: 268
+             Iterations: 174
+             Function evaluations: 357
     saved in  C:\data\Columbus.out\ER{0}AR{0}MA{1,2,4}[RESID][(P)ACF].png
     >>> o.u_hull_chart
     saved in  C:\data\Columbus.out\ER{0}AR{0}MA{1,2,4}[RESID][HULLS].png
@@ -105,14 +108,14 @@ or thinking of those as local, let's go for a MA{1,2,4}.
 
 Thinking of CRIME variable as cointegrated through space with INC and HOVAL, let's go for a (partial) difference whose structure is superimposed to the lags 1, 2 and 4.
 
-    >>> o.u_XACF_chart_of(ER_ks=[1, 2, 4])
+    >>> o.u_XACF_chart_of(ER_ks=[1, 2, 4])             
     Optimization terminated successfully.
              Current function value: 107.126738
-             Iterations: 163
-             Function evaluations: 304
-    saved in  C:\Columbus.out\ER{1,2,4}AR{0}MA{0}[RESID][(P)ACF].png
+             Iterations: 189
+             Function evaluations: 382
+    saved in  C:\data\Columbus.out\ER{1,2,4}AR{0}MA{0}[RESID][(P)ACF].png
     >>> o.u_hull_chart
-    saved in  C:\Columbus.out\ER{1,2,4}AR{0}MA{0}[RESID][HULLS].png
+    saved in  C:\data\Columbus.out\ER{1,2,4}AR{0}MA{0}[RESID][HULLS].png
 
 <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B1,2,4%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="50%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B1,2,4%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5BHULLS%5D.png?raw=true" width="50%"/>
 
@@ -133,14 +136,14 @@ A little summary can be helpfull.
     \rho_{1}                   NaN                  NaN             0.137684                  NaN
     \rho_{2}                   NaN                  NaN             0.218272                  NaN
     \rho_{4}                   NaN                  NaN             0.144365                  NaN
-    \sigma^2            130.758538            99.208994            90.023838            73.773795
+    \sigma^2_{ML}       122.752913            93.134974            79.000511            69.257032
     ================================= CRTS
     \\\\ HAT ////         ER{0}AR{0}MA{0}  ER{0}AR{0}MA{1,2,4}  ER{0}AR{1,2,4}MA{0}  ER{1,2,4}AR{0}MA{0}
     llik                      -187.377239          -176.543452          -178.317424          -176.654726
-    HQC                        383.003506           369.489193           373.341761           369.711742
-    BIC                        386.525705           376.533591           380.386158           376.756140
-    AIC                        380.850244           365.182669           369.035237           365.405219
-    AICg                         5.627724             5.307978             5.386601             5.312519
+    HQC                        382.907740           369.393427           372.941372           369.615976
+    BIC                        386.429939           376.437825           379.985770           376.660374
+    AIC                        380.754478           365.086903           368.634848           365.309452
+    AICg                         5.625770             5.306023             5.378430             5.310565
     pr^2                         0.552404             0.548456             0.542484             0.550022
     pr^2 (pred)                  0.552404             0.548456             0.590133             0.550022
     Sh's W                       0.977076             0.990134             0.949463             0.972979
@@ -150,19 +153,16 @@ A little summary can be helpfull.
     BP's B                       7.900442             2.778268            20.419370             9.983489
     BP's Pr(>|B|)                0.019250             0.249291             0.000037             0.006794
     KB's K                       5.694088             2.723948             9.514668             6.721746
-    KB's Pr(>|K|)                0.058016             0.256155             0.008588             0.034705    
+    KB's Pr(>|K|)                0.058016             0.256155             0.008588             0.034705 
 
-Given that the specification `ER{0}AR{0}MA{1,2,4}` has the minimum BIC, let's pursue with it and bootstrap-estimate all parameters' bias-corrected and accelerated (BCa) interval. 
+Given that the specification `ER{0}AR{0}MA{1,2,4}` has the minimum BIC, let's pursue with it and bootstrap-estimate all parameters' bias-corrected and accelerated (BCa) intervals. 
 
-    >>> o.verbose   = True  # Displays progression
-    >>> o.opverbose = False # Hide optimization messages.
+    >>> o.opverbose = False     # Printing minimizer's messages may slow down iterations
     >>> run_kwargs = {
     ...     'plot_hist': True,  # Bootstrap distributions
     ...     'plot_conv': True,  # Convergence plots
-    ...     'verbose'  : True,  # To check progression
-    ...     'opverbose': True,  # To check progression
     ...     'MA_ks'    : [1, 2, 4] ,
-    ...     'nbsamples': 10000, # Number of resampling iterations
+    ...     'nbsamples': 10000, # Number of resamplings
     ... }
     >>> o.PIs_computer(**run_kwargs)
 
