@@ -185,7 +185,7 @@ There is henceforth no need to make an argumented call like `o.table_test_of(MA_
     \sigma^2_{ML}  93.134973   19.868010   4.687685  2.795560e-05  2.763129e-06
 
 
-But one may want not to make any assumptions regarding spatial parameters distribution and bootstrap-estimate all parameters' bias-corrected and accelerated (BCa) intervals. 
+But one may want not to make any assumptions regarding spatial parameters distribution and favor an empirical approach by bootstrap-estimating all parameters' (bias-corrected and accelerated - BCa) percentile intervals. 
 
     >>> o.opverbose = False       # Printing minimizer's messages may slow down iterations
     >>> o.PIs_computer(
@@ -194,5 +194,9 @@ But one may want not to make any assumptions regarding spatial parameters distri
     ...     MA_ks     = [1, 2, 4]
     ...     nbsamples = 10000     # Number of resamplings
     ... )
+    
+10000 resamplings later, we get
+
+<img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Bbeta0%5D%5Bdist%5D.png?raw=true" width="33%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Bbeta%7BHOVAL%7D%5D%5Bdist%5D.png?raw=true" width="33%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Bbeta%7BINC%7D%5D%5Bdist%5D.png?raw=true" width="33%"/>
 
     
