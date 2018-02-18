@@ -189,7 +189,7 @@ Also, note that the above table holds for
     >>> o.type_I_err
     0.05
 
-But one may want not to make any assumptions regarding spatial parameters distribution and favor an empirical approach by bootstrap-estimating all parameters' (bias-corrected and accelerated - BCa) percentile intervals. 
+But one may want not to make any assumptions regarding spatial parameters distribution and favor an empirical approach by bootstrap-estimating all parameters as well as their (bias-corrected and accelerated - BCa) percentile intervals. 
 
     >>> o.opverbose = False       # Printing minimizer's messages may slow down iterations
     >>> o.PIs_computer(
