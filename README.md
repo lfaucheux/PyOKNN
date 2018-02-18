@@ -73,7 +73,7 @@ and
 
 <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="50%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5BHULLS%5D.png?raw=true" width="50%"/>
 
-NB: hull charts should be treated with great caution since before talking about "long-distance trend" and/or "space-dependent variance", we may be sure that residuals are somehow sorted geographically. That being noted, the map below shows that residuals are actually rather geographically sorted and that hulls are likely to be informative.
+NB: hull charts should be treated with great caution since before talking about "long-distance trend" and/or "space-dependent variance", we may be sure that residuals are somehow sorted geographically. However, saying that it is totally uninformative appears abusive as well.
 
 <p align="center">
 <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/data/COLUMBUS/columbus.png?raw=true" width="60%"/><img>
