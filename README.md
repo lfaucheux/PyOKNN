@@ -207,7 +207,9 @@ which is not as true for spatial parameters:
 
 <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Blambda%7B1%7D%5D%5Bdist%5D.png?raw=true" width="33%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Blambda%7B2%7D%5D%5Bdist%5D.png?raw=true" width="33%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Blambda%7B4%7D%5D%5Bdist%5D.png?raw=true" width="33%"/>
 
-One notable diffference is that BCa percentile intervals of <img src="https://latex.codecogs.com/gif.latex?\widehat{\lambda_{2}}" title="\widehat{\lambda_{2}}" /> and <img src="https://latex.codecogs.com/gif.latex?\widehat{\lambda_{4}}" title="\widehat{\lambda_{4}}" /> contain 0 while their non-BCa version do not.
+One notable diffference is that BCa percentile intervals of <img src="https://latex.codecogs.com/gif.latex?\widehat{\lambda_{2}}" title="\widehat{\lambda_{2}}" /> and <img src="https://latex.codecogs.com/gif.latex?\widehat{\lambda_{4}}" title="\widehat{\lambda_{4}}" /> contain 0 while their non-BCa version do not. Moreover, these non-normal based intervals are all the more informative when dealing with unsymmetrical distributions, as <img src="https://latex.codecogs.com/gif.latex?\sigma^2_{ML}" title="\sigma^2_{ML}" />'s
+
+<img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Bsigma%5E2%7BML%7D%5D%5Bdist%5D.png?raw=true" width="33%"/>
 
 Note that the statistical table, previously called doing `o.table_test`, is now augmented on the right by the bootstrap-results.
 
@@ -221,9 +223,9 @@ Note that the statistical table, previously called doing `o.table_test`, is now 
     \lambda_{4}     0.390871    0.089860   4.349759  8.232171e-05  1.362874e-05      0.365711      0.416032      0.116317      0.768369      -0.032977       0.652651
     \sigma^2_{ML}  93.134973   19.868010   4.687685  2.795560e-05  2.763129e-06     87.572032     98.697913     50.668029    139.392307      61.426042     168.070074
 
-Incidentally, others distribution have been generated in addition to those of the parameters
+Incidentally, other distributions have been generated in addition to those of the parameters
 
-<img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Bsigma%5E2%7BML%7D%5D%5Bdist%5D.png?raw=true" width="33%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bcrt%5D%5Bllik%5D%5Bdist%5D.png?raw=true" width="33%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bcrt%5D%5BBIC%5D%5Bdist%5D.png?raw=true" width="33%"/>
+<img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bcrt%5D%5Bllik%5D%5Bdist%5D.png?raw=true" width="33%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bcrt%5D%5BBIC%5D%5Bdist%5D.png?raw=true" width="33%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bcrt%5D%5Bpr%5E2%5D%5Bdist%5D.png?raw=true" width="33%"/>
 
 
-All the others charts (distribution and convergence plots) are viewable [here](https://github.com/lfaucheux/PyOKNN/tree/master/PyOKNN/examples).
+All the other charts (distributions and convergence plots) are viewable [here](https://github.com/lfaucheux/PyOKNN/tree/master/PyOKNN/examples).
