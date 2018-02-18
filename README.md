@@ -32,11 +32,11 @@
 
 ## Installation
 
-We are going to use a package management system used to install and manage software packages written in Python, namely [pip](https://en.wikipedia.org/wiki/Pip_(package_manager)). Open a session in your OS shell prompt and type
+We are going to use a package management system to install and manage software packages written in Python, namely [pip](https://en.wikipedia.org/wiki/Pip_(package_manager)). Open a session in your OS shell prompt and type
 
     pip install pyoknn
 
-Or using a non python-builtin approach, namely [git](https://git-scm.com/downloads),
+Or using a non-python-builtin approach, namely [git](https://git-scm.com/downloads),
 
     git clone git://github.com/lfaucheux/PyOKNN.git
     cd PyOKNN
@@ -59,7 +59,7 @@ We use [Anselin's Columbus OH 49 observation data set](https://nowosad.github.io
     ... )
 
 
-Let's directly illustrate the main *raison d'être* of this package, i.e. which is about modelling residuals correlation structure. To do so, simply type
+Let's directly illustrate the main *raison d'être* of this package, i.e. modelling spatial correlation structures. To do so, simply type
 
     >>> o.u_XACF_chart
     saved in  C:\data\Columbus.out\ER{0}AR{0}MA{0}[RESID][(P)ACF].png
@@ -73,7 +73,7 @@ and
 
 <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="50%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5BHULLS%5D.png?raw=true" width="50%"/>
 
-NB: hull charts should be treated with great caution since before talking about "long-distance trend" and/or "space-dependent variance", we may be sure that residuals are somehow sorted geographically. However, saying that it is totally uninformative appears abusive as well.
+NB: hull charts should be treated with great caution since before talking about "long-distance trend" and/or "space-dependent variance", we should make sure that residuals are somehow sorted geographically. However, as shown in the map below, saying that it is totally uninformative appears abusive.
 
 <p align="center">
 <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/data/COLUMBUS/columbus.png?raw=true" width="60%"/><img>
@@ -106,7 +106,7 @@ or thinking of those as local, let's go for a MA{1,2,4}.
 
 <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="50%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D%5BRESID%5D%5BHULLS%5D.png?raw=true" width="50%"/>
 
-Thinking of CRIME variable as cointegrated through space with INC and HOVAL, let's go for a (partial) difference whose structure is superimposed to the lags 1, 2 and 4.
+Thinking of CRIME variable as cointegrated through space with INC and HOVAL, let's run a (partial) differencing whose structure is superimposed to the lags 1, 2 and 4.
 
     >>> o.u_XACF_chart_of(ER_ks=[1, 2, 4])             
     Optimization terminated successfully.
@@ -119,7 +119,7 @@ Thinking of CRIME variable as cointegrated through space with INC and HOVAL, let
 
 <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B1,2,4%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="50%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B1,2,4%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5BHULLS%5D.png?raw=true" width="50%"/>
 
-A little summary can be helpfull.
+A little summary can be helpful.
 
     >>> o.summary()
     ================================= PARS
@@ -155,12 +155,12 @@ A little summary can be helpfull.
     KB's K                       5.694088             2.723948             9.514668             6.721746
     KB's Pr(>|K|)                0.058016             0.256155             0.008588             0.034705 
 
-Given that the specification `ER{0}AR{0}MA{1,2,4}` has the minimum BIC, let's pursue with it and check its parameters-covariance matrix and statistical table. Know that we can figure out what the ongoing model is, doing
+Given that the specification `ER{0}AR{0}MA{1,2,4}` has the minimum BIC, let's pursue with it and check its parameters-covariance matrix and statistical table. Keep in mind that we can figure out what the ongoing model is, typing
 
     >>> o.model_id
     ER{1,2,4}AR{0}MA{0}
 
-which is not the model we want. This one is simply the last that we had work with. We thus have to explicitly request `ER{0}AR{0}MA{1,2,4}`'s parameters-covariance matrix and statistical table, doing,
+which is not the model we want. This one is simply the last that we have worked with. We thus have to explicitly request `ER{0}AR{0}MA{1,2,4}`'s parameters-covariance matrix and statistical table, as follows
 
     >>> o.covmat_of(MA_ks=[1, 2, 4])
     \\\\ COV ////    \beta_0  \beta_{INC}  \beta_{HOVAL}  \lambda_{1}  \lambda_{2}  \lambda_{4}  \sigma^2_{ML}
@@ -172,9 +172,9 @@ which is not the model we want. This one is simply the last that we had work wit
     \lambda_{4}     0.073201    -0.014063       0.003102    -0.001523    -0.001668     0.008075       0.092086
     \sigma^2_{ML}  -1.621429     0.715907      -0.239979     0.346635     0.576185     0.092086     394.737828
 
-and (there is henceforth no need to make an argumented call like `o.table_test_of(MA_ks=[1, 2, 4])` since `ER{0}AR{0}MA{1,2,4}` is the model set currently thanks to `o.covmat_of(MA_ks=[1, 2, 4])`)
+and
 
-    >>> o.table_test
+    >>> o.table_test # no need to type `o.table_test_of(MA_ks=[1, 2, 4])`
     \\\\ STT ////   Estimate  Std. Error  t|z value      Pr(>|t|)      Pr(>|z|)  95.0% lo.  95.0% up.
     \beta_0        63.418312    4.374840  14.496146  3.702829e-18  1.281465e-47  62.193379  64.643245
     \beta_{INC}    -1.237462    0.331017  -3.738367  5.422541e-04  1.852193e-04  -1.330145  -1.144779
@@ -199,7 +199,7 @@ But one may want not to make any assumptions regarding spatial parameters distri
     ...     nbsamples = 10000     # Number of resamplings
     ... )
     
-10000 resamplings later, we see regarding economic parameters that using normal-approximation based confidence intervals is anything but "flat wrong", look:
+10000 resamplings later, we see regarding economic parameters that using normal-approximation-based confidence intervals is anything but "flat wrong", look:
 
 <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Bbeta0%5D%5Bdist%5D.png?raw=true" width="33%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Bbeta%7BHOVAL%7D%5D%5Bdist%5D.png?raw=true" width="33%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Bbeta%7BINC%7D%5D%5Bdist%5D.png?raw=true" width="33%"/>
 
@@ -207,11 +207,11 @@ which is not as true for spatial parameters:
 
 <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Blambda%7B1%7D%5D%5Bdist%5D.png?raw=true" width="33%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Blambda%7B2%7D%5D%5Bdist%5D.png?raw=true" width="33%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Blambda%7B4%7D%5D%5Bdist%5D.png?raw=true" width="33%"/>
 
-One notable diffference is that BCa percentile intervals of <img src="https://latex.codecogs.com/gif.latex?\widehat{\lambda_{2}}" title="\widehat{\lambda_{2}}" /> and <img src="https://latex.codecogs.com/gif.latex?\widehat{\lambda_{4}}" title="\widehat{\lambda_{4}}" /> contain 0 while their non-BCa version do not. Moreover, these non-normal based intervals are all the more informative when dealing with unsymmetrical distributions, as that of <img src="https://latex.codecogs.com/gif.latex?\sigma^2_{ML}" title="\sigma^2_{ML}" />
+One notable diffference is that BCa percentile intervals of <img src="https://latex.codecogs.com/gif.latex?\widehat{\lambda_{2}}" title="\widehat{\lambda_{2}}" /> and <img src="https://latex.codecogs.com/gif.latex?\widehat{\lambda_{4}}" title="\widehat{\lambda_{4}}" /> contain 0 while their non-BCa version does not. Moreover, these non-normal-based intervals are all the more informative when dealing with asymmetrical distributions, as that of <img src="https://latex.codecogs.com/gif.latex?\sigma^2_{ML}" title="\sigma^2_{ML}" />
 
 <div  align="center"><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Bsigma%5E2%7BML%7D%5D%5Bdist%5D.png?raw=true" width="33%"/></div>
 
-Note that the statistical table, previously called doing `o.table_test`, is now augmented on the right by the bootstrap-results.
+Note that the statistical table, previously called, typing `o.table_test`, is now augmented on the right by the bootstrap-results.
 
     >>> o.table_test
     \\\\ STT ////   Estimate  Std. Error  t|z value      Pr(>|t|)      Pr(>|z|)  95.0% CI.lo.  95.0% CI.up.  95.0% PI.lo.  95.0% PI.up.  95.0% BCa.lo.  95.0% BCa.up.
