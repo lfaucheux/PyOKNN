@@ -6,7 +6,7 @@ __authors__ = [
     "laurent.faucheux@hotmail.fr",
 ]
 
-__version__ = '0.1.62'
+__version__ = '0.1.63'
 
 __all__     = [
     '__authors__',
@@ -136,59 +136,152 @@ class UniHasher(object):
 ##    ┌─┐┌─┐┌─┐┬ ┬┌─┐
 ##    │  ├─┤│  ├─┤├┤ 
 ##    └─┘┴ ┴└─┘┴ ┴└─┘
+    
 class Cache(UniHasher):
     def __init__(self):
-        """
-        Homemade cache class which aims at being inherited
-
-        Example
-        -------
-        >>> import random
-        >>> class_ = type(
-        ...     'class_', 
-        ...     (Cache, ), 
-        ...     {'attr':Cache._property(lambda _ :random.random())}, 
-        ... )
-        >>> instance = class_()
-        >>> instance.attr == instance.attr
-        True
-        """
         self._cache = {}
         self._tempo = {}
 
     @classmethod
-    def _property(cls, meth):
+    def _dep_property(cls, cid, c='_cache'):
+        """ Memoizes outcomes of the so-decorated method, using
+        its name plus a suffix which consists of the outcome of
+        the attribute whose name is specified via `cid`.
+        
+        Example
+        -------
+        >>> class_ = type(
+        ...     'class_', 
+        ...     (Cache, ), 
+        ...     {
+        ...         'suffix': ' plus an id',
+        ...         'attr'  : Cache._dep_property('suffix')(
+        ...             meth = lambda cls: rd.random(),
+        ...         )
+        ...     }, 
+        ... )
+        >>> o = class_()
+        >>> o.attr == o.attr
+        True
+        >>> o._cache.keys()
+        ['<lambda> plus an id']
+        """
+        def _property_(meth):
+            @property
+            @ft.wraps(meth)
+            def __property(cls):
+                mn = '{}{}'.format(
+                    meth.__name__,
+                    getattr(cls, cid)
+                )
+                _c = getattr(cls, c)
+                if mn not in _c:
+                    _c[mn] = meth(cls)
+                return _c[mn]
+            return __property
+        return _property_
+
+    @classmethod
+    def __memoize_as_prop(cls, meth, attr):
+        """ Memoizes outcomes of the so-decorated method, using
+        its name as dict-key identifier.        
+        
+        Example
+        -------
+        >>> C = Cache
+        >>> class_ = type(
+        ...     'class_', 
+        ...     (Cache, ), 
+        ...     {
+        ...         'attr':C._Cache__memoize_as_prop(
+        ...             meth = lambda cls: rd.random(),
+        ...             attr = '_cache'
+        ...         )
+        ...     }, 
+        ... )
+        >>> o = class_()
+        >>> o.attr == o.attr
+        True
+        """
         @property
         @ft.wraps(meth)
         def __property(cls):
-            meth_name = meth.__name__
-            if meth_name not in cls._cache:
-                cls._cache[meth_name] = meth(cls)
-            return cls._cache[meth_name]
+            mn = meth.__name__
+            _c = getattr(cls, attr)
+            if mn not in _c:
+                _c[mn] = meth(cls)
+            return _c[mn]
         return __property
+        
+    @classmethod
+    def _property(cls, meth):
+        """ Memoizes outcomes of the so-decorated method.
+        NB: is a pre-set wrapper of `__memoize_as_prop`.        
+        
+        Example
+        -------
+        >>> class_ = type(
+        ...     'class_', 
+        ...     (Cache, ), 
+        ...     {'attr':Cache._property(lambda cls: rd.random())}, 
+        ... )
+        >>> o = class_()
+        >>> o.attr == o.attr
+        True
+        """
+        return cls.__memoize_as_prop(meth, '_cache')
 
     @classmethod
     def _property_tmp(cls, meth):
-        @property
-        @ft.wraps(meth)
-        def __property(cls):
-            meth_name = meth.__name__
-            if meth_name not in cls._tempo:
-                cls._tempo[meth_name] = meth(cls)
-            return cls._tempo[meth_name]
-        return __property
+        """ Memoizes outcomes of the so-decorated method.
+        The only difference with the class method named
+        _property is that memoization is intended to be
+        temporary.
+        NB: is a pre-set wrapper of `__memoize_as_prop`.
+        
+        Chk
+        ---
+        >>> class_ = type(
+        ...     'class_', 
+        ...     (Cache, ), 
+        ...     {'attr':Cache._property_tmp(lambda cls: rd.random())}, 
+        ... )
+        >>> o = class_()
+        >>> o.attr == o.attr
+        True
+        """
+        return cls.__memoize_as_prop(meth, '_tempo')
 
     @classmethod
     def _method(cls, meth):
+        """ Memoizes outcomes of the so-decorated method, using as
+        dict-key identifier its hashed arguments or `cid` if the
+        latter is present among arguments.   
+        
+        Example
+        -------
+        >>> class_ = type(
+        ...     'class_', 
+        ...     (Cache, ), 
+        ...     {
+        ...         'meth':Cache._method(
+        ...             meth = lambda cls,to_be_hashed: rd.random()
+        ...         )
+        ...     }, 
+        ... )
+        >>> o = class_()
+        >>> o.meth('to be hashed') == o.meth('to be hashed')
+        True
+        """
         @ft.wraps(meth)
         def __method(cls, *args, **kws):
-            meth_name = '{}_{}'.format(
+            mn = '{}_{}'.format(
                 meth.__name__,
                 kws.get('cid') or cls._args_hash(args, kws)
             )
-            if meth_name not in cls._cache:
-                cls._cache[meth_name] = meth(cls, *args, **kws)
-            return cls._cache[meth_name]
+            if mn not in cls._cache:
+                cls._cache[mn] = meth(cls, *args, **kws)
+            return cls._cache[mn]
         return __method
 
 #*****************************************************************************#
@@ -815,10 +908,10 @@ class SpDataObject(DataObject):
 
         Chk
         ---
-        >>> hash_ref = 'bc3JZoBk99nnYkC43dgn0Q==\n'
         >>> hash_chk = o.hash_(
         ...     _w_collection
         ... )
+        >>> hash_ref = 'bc3JZoBk99nnYkC43dgn0Q==\n'
         >>> _w_collection_as_expected = hash_ref == hash_chk
         >>> _w_collection_as_expected
         True
@@ -841,10 +934,10 @@ class SpDataObject(DataObject):
 
         Chk
         ---
-        >>> hash_ref = 'bc3JZoBk99nnYkC43dgn0Q==\n'
         >>> hash_chk = o.hash_(
         ...     w_collection
         ... )
+        >>> hash_ref = 'bc3JZoBk99nnYkC43dgn0Q==\n'
         >>> w_collection_as_expected = hash_ref == hash_chk
         >>> w_collection_as_expected
         True
@@ -1628,6 +1721,7 @@ class GaussianMLARIMA(SpDataObject):
         ...     y_name    = 'CRIME',
         ...     x_names   = ['INC', 'HOVAL'],
         ...     id_name   = 'POLYID',
+        ...     opverbose = False,
         ... )
         >>> o.llik
         array([[-187.37723881]])
@@ -1636,10 +1730,6 @@ class GaussianMLARIMA(SpDataObject):
 
         >>> o.from_scratch(ER_ks=[1])
         >>> o.llik
-        Optimization terminated successfully.
-                 Current function value: 115.004752
-                 Iterations: 48
-                 Function evaluations: 105
         array([[-184.53273963]])
         >>> o.full_llik
         array([[-184.53273963]])
@@ -1650,18 +1740,10 @@ class GaussianMLARIMA(SpDataObject):
         ...     ER_ks=[12],
         ... )
         >>> o.llik
-        Optimization terminated successfully.
-                 Current function value: 106.689925
-                 Iterations: 338
-                 Function evaluations: 638
         array([[-176.217913]])
         >>> o.full_llik
         array([[-176.217913]])
         """
-        #np.log(jacobian) - .5*self.n*np.log(variance) - .5*self.n * ( np.log(2.*np.pi) + 1.)
-        #np.log(jacobian) - .5*self.n * ( np.log(2.*np.pi)+ np.log(variance) + 1.)
-        #np.log(jacobian) - .5*self.n * ( np.log(2.*np.pi*variance) + 1.)
-        #np.log(jacobian) - .5*self.n * np.log(2.*np.pi*variance) - .5*self.n
         return self.conc_llik - .5*self.n * ( np.log(2.*np.pi) + 1.)
 
     @Cache._property_tmp
@@ -1803,7 +1885,7 @@ class GaussianMLARIMA(SpDataObject):
                [ -0.15167561,  -0.01618143,   0.00999793,  -0.        ],
                [ -0.        ,   0.        ,  -0.        , 615.03174058]])
 
-        In accordance with its (asymptotic) theoretically-grounded counterpart
+        In accordance with its theoretically-grounded counterpart
         >>> o.betas_cov
         array([[21.05188021, -0.88465637, -0.15167561],
                [-0.88465637,  0.10480806, -0.01618143],
@@ -1816,6 +1898,9 @@ class GaussianMLARIMA(SpDataObject):
     def thetas_cov(self):
         """ Alias for `self.obs_cov_matrix`."""
         return self.obs_cov_matrix
+    def thetas_cov_of(self, **kws):
+        self.from_scratch(**kws)
+        return self.thetas_cov
     @Cache._property_tmp
     def thetas_se(self):
         """ Estimated standard error of the ML estimates, given by:
@@ -1859,20 +1944,42 @@ class GaussianMLARIMA(SpDataObject):
             self.p
         )
 
-    _stt_names = [
-        'Estimate',
-        'Std. Error',
-        't|z value',
-        'Pr(>|t|)',
-        'Pr(>|z|)'
-    ]
+    @Cache._property_tmp
+    def _stt_names(self):
+        _100cl = 1e2*self.clevel
+        return [
+            'Estimate',
+            'Std. Error',
+            't|z value',
+            'Pr(>|t|)',
+            'Pr(>|z|)',
+            '{:.1f}% CI.lo.'.format(_100cl),
+            '{:.1f}% CI.up.'.format(_100cl),
+        ]
+    @Cache._property_tmp
+    def thetas_loB(self):
+        if self.n > 30:
+            return self.thetas - self.z_bila*self.thetas_se*pow(self.n, -.5)
+        return self.thetas - self.t_bila*self.thetas_se*pow(self.n, -.5)
+
+    @Cache._property_tmp
+    def thetas_upB(self):
+        if self.n > 30:
+            return self.thetas + self.z_bila*self.thetas_se*pow(self.n, -.5)
+        return self.thetas + self.t_bila*self.thetas_se*pow(self.n, -.5)
+
     @Cache._property_tmp
     def thetas_stt(self):
         return np.hstack([
             self.thetas,
             self.thetas_se,
             self.thetas_tt,
+            self.thetas_loB,
+            self.thetas_upB,
         ])
+    def thetas_stt_of(self, **kws):
+        self.from_scratch(**kws)
+        return self.thetas_stt
 
     @Cache._property_tmp
     def betas_tt(self):
@@ -2092,20 +2199,26 @@ class GaussianMLARIMA(SpDataObject):
             _xri      = x        
         
         return _ysri, _xri, _G, _S, _Ri, _R
+
 #*****************************************************************************#
-## https://en.wikipedia.org/wiki/Correlogram#Statistical_inference_with_correlograms
 ##    ═╗ ╦╔═╗╔═╗╔═╗╔╦╗┌─┐┬┌─┌─┐┬─┐
 ##    ╔╩╦╝╠═╣║  ╠╣ ║║║├─┤├┴┐├┤ ├┬┘
 ##    ╩ ╚═╩ ╩╚═╝╚  ╩ ╩┴ ┴┴ ┴└─┘┴└─
 class XACFMaker(GaussianMLARIMA):
 
-    type_I_err = .05    
-    clevel = 1 - type_I_err
-    
-    z_unil  = sc.stats.norm.ppf(clevel, loc=0, scale=1)    
-    l_bound = type_I_err/2.
-    r_bound = 1. - l_bound
-    z_bila  = sc.stats.norm.ppf(r_bound, loc=0, scale=1)
+    type_I_err = .05
+    @Cache._dep_property('type_I_err')
+    def clevel(self):return 1. - self.type_I_err
+    @Cache._dep_property('type_I_err')
+    def z_unil(self): return sc.stats.norm.ppf(self.clevel, loc=0, scale=1)
+    @Cache._dep_property('type_I_err')
+    def l_bound(self): return self.type_I_err/2.    
+    @Cache._dep_property('type_I_err')
+    def r_bound(self): return 1. - self.l_bound     
+    @Cache._dep_property('type_I_err')
+    def z_bila(self): return sc.stats.norm.ppf(self.r_bound, loc=0, scale=1)
+    @Cache._dep_property('type_I_err')
+    def t_bila(self): return sc.stats.t.ppf(self.r_bound, self.n - self.k - self.p)
 
     __AK = 'ACF'
     __PK = 'PACF'
@@ -2222,16 +2335,16 @@ class XACFMaker(GaussianMLARIMA):
 
         Chk
         ---
-        >>> hash_ref = 'ec6fYBPx1EXxT/HuaaM1TA==\n'
         >>> o = XACFMaker(
         ...     data_name = 'columbus',
         ...     y_name    = 'CRIME',
         ...     x_names   = [],
         ... )
-        >>> o.z_unil = 1.6448536269514722
+        >>> o.type_I_err = .05
         >>> np.random.seed(0)
         >>> Rs = np.random.normal(0, 1, size=o.n)[:, None]
         >>> v  = o.Bartlett(Rs)
+        >>> hash_ref = 'ec6fYBPx1EXxT/HuaaM1TA==\n'
         >>> Bartlett_as_expected = o.hash_(v) ==  hash_ref
         >>> Bartlett_as_expected
         True
@@ -2251,14 +2364,14 @@ class XACFMaker(GaussianMLARIMA):
 
         Chk
         ---
-        >>> hash_ref = 'l7gWSnn7Vhohx+PzGIOaiA==\n'
         >>> o = XACFMaker(
         ...     data_name = 'columbus',
         ...     y_name    = 'CRIME',
         ...     x_names   = [],
         ... )
-        >>> o.z_unil = 1.6448536269514722
+        >>> o.type_I_err = .05
         >>> v  = o.Quenouille
+        >>> hash_ref = 'l7gWSnn7Vhohx+PzGIOaiA==\n'
         >>> Quenouille_as_expected = o.hash_(v) == hash_ref
         >>> Quenouille_as_expected
         True
@@ -2284,7 +2397,7 @@ class XACFMaker(GaussianMLARIMA):
 
         Chk 
         ---
-        >>> o.z_unil  = 1.6448536269514722
+        >>> o.type_I_err = .05
         >>> hashs_ref = {
         ...     'u': 'VuzlpLO+nRQJVPTEDUDv6w==\n',
         ...     'PACF':(
@@ -3207,17 +3320,17 @@ class PIntervaler(Metrician):
             htd['A1'] = A1 = self.A12_computer(Z, A, Z - z)
             htd['A2'] = A2 = self.A12_computer(Z, A, Z + z)
 
-            htd['%s_lo'%self.__BC] = loB = self.bounds_computer(
+            htd['%s_lo'%self.__BC] = bcloB = self.bounds_computer(
                 bt_, A1.flatten()
             ).diagonal().T
-            htd['%s_up'%self.__BC] = upB = self.bounds_computer(
+            htd['%s_up'%self.__BC] = bcupB = self.bounds_computer(
                 bt_, A2.flatten()
             ).diagonal().T
 
-            htd['%s_lo'%self.__PI] = self.bounds_computer(
+            htd['%s_lo'%self.__PI] = piloB = self.bounds_computer(
                 bt_, self.l_bound
             )
-            htd['%s_up'%self.__PI] = self.bounds_computer(
+            htd['%s_up'%self.__PI] = piupB = self.bounds_computer(
                 bt_, self.r_bound
             )
 
@@ -3234,8 +3347,23 @@ class PIntervaler(Metrician):
 
             # -- just for free since not grounded theoretically.
             htd['std'] = (
-                .5*(ht_ - loB) + .5*(upB - ht_)
+                .5*(ht_ - bcloB) + .5*(bcupB - ht_)
             )/z
+
+            # -- augmentation of the parameters' statistic table.
+            if key == 'par':
+                _100cl = 1e2*self.clevel
+                self._tempo['_stt_names'] = self._stt_names + [
+                    '{:.1f}% PI.lo.'.format(_100cl),
+                    '{:.1f}% PI.up.'.format(_100cl),  
+                    '{:.1f}% BCa.lo.'.format(_100cl),
+                    '{:.1f}% BCa.up.'.format(_100cl),                     
+                ]
+                self._tempo['thetas_stt'] = np.hstack((
+                    self.thetas_stt,
+                    piloB, piupB,
+                    bcloB, bcupB,
+                ))
         return ht        
 
     def hist_charter(self, key, btd, htd, **kws):
@@ -3414,26 +3542,146 @@ class Presenter(PIntervaler):
         KB's K                         1.892857
         KB's Pr(>|K|)                  0.388125
         """
+        key_getter = lambda thts, key:thts[key].get(key, thts[key]['stack'])\
+                     if isinstance(thts, dict) else thts
         return {
             'par':lambda ylab, thts, key='stack':self._labeler(
-                ylab, thts['par'].get(key, thts['par']['stack']),
+                ylab, key_getter(thts, 'par'),
                 self.par_names,
                 [self.model_id]
             ),
             'crt':lambda ylab, thts, key='stack':self._labeler(
-                ylab, thts['crt'].get(key, thts['crt']['stack']),
+                ylab, key_getter(thts, 'crt'),
                 map(lambda (n,k):n, self._crt_names),
                 [self.model_id]
             ),
             'cov':lambda ylab, thts, key='stack':self._labeler(
-                ylab, thts['cov'].get(key, thts['cov']['stack']),
+                ylab, key_getter(thts, 'cov'),
                 self.par_names
             ),
             'stt':lambda ylab, thts, key='stack':self._labeler(
-                ylab, thts['stt'].get(key, thts['stt']['stack']),
+                ylab, key_getter(thts, 'stt'),
                 self.par_names, self._stt_names
             )
         }
+
+    @Cache._property_tmp
+    def table_test(self):
+        r""" Returns labeled statistical tables outcoming from
+        the currently specified model.
+
+        Example
+        -------
+        >>> o = Presenter(
+        ...     data_name = 'columbus',
+        ...     y_name    = 'CRIME',
+        ...     x_names   = ['INC', 'HOVAL'],
+        ...     id_name   = 'POLYID',
+        ...     verbose   = False,
+        ...     opverbose = False,
+        ... )
+        >>> _ = o.hat_run(AR_ks=[1], MA_ks=[4, 6])
+        >>> o.table_test
+        \\\\ STT ////   Estimate  Std. Error  t|z value      Pr(>|t|)      Pr(>|z|)  95.0% CI.lo.  95.0% CI.up.
+        \beta_0        56.512740    4.717540  11.979281  2.732522e-15  4.562623e-33     55.191853     57.833627
+        \beta_{INC}    -1.627661    0.254482  -6.395976  9.700321e-08  1.595251e-10     -1.698915     -1.556408
+        \beta_{HOVAL}  -0.166921    0.069070  -2.416678  1.997937e-02  1.566285e-02     -0.186260     -0.147582
+        \rho_{1}        0.207512    0.080001   2.593863  1.292346e-02  9.490420e-03      0.185112      0.229912
+        \lambda_{4}     0.498545    0.110704   4.503422  5.051773e-05  6.686776e-06      0.467548      0.529541
+        \lambda_{6}    -0.254709    0.123000  -2.070811  4.441309e-02  3.837645e-02     -0.289148     -0.220270
+        \sigma^2_{ML}  78.122191   16.160158   4.834247  1.738740e-05  1.336507e-06     73.597430     82.646952
+        
+        """
+        return self.labelers['stt'](
+            'STT', self.thetas_stt
+        )
+
+    def table_test_of(self, **kws):
+        r""" Returns labeled statistical tables outcoming from
+        the specified model.
+
+        Example
+        -------
+        >>> o = Presenter(
+        ...     data_name = 'columbus',
+        ...     y_name    = 'CRIME',
+        ...     x_names   = ['INC', 'HOVAL'],
+        ...     id_name   = 'POLYID',
+        ...     verbose   = False,
+        ...     opverbose = False,
+        ... )
+        >>> o.table_test_of(AR_ks=[1], MA_ks=[4, 6])
+        \\\\ STT ////   Estimate  Std. Error  t|z value      Pr(>|t|)      Pr(>|z|)  95.0% CI.lo.  95.0% CI.up.
+        \beta_0        56.512740    4.717540  11.979281  2.732522e-15  4.562623e-33     55.191853     57.833627
+        \beta_{INC}    -1.627661    0.254482  -6.395976  9.700321e-08  1.595251e-10     -1.698915     -1.556408
+        \beta_{HOVAL}  -0.166921    0.069070  -2.416678  1.997937e-02  1.566285e-02     -0.186260     -0.147582
+        \rho_{1}        0.207512    0.080001   2.593863  1.292346e-02  9.490420e-03      0.185112      0.229912
+        \lambda_{4}     0.498545    0.110704   4.503422  5.051773e-05  6.686776e-06      0.467548      0.529541
+        \lambda_{6}    -0.254709    0.123000  -2.070811  4.441309e-02  3.837645e-02     -0.289148     -0.220270
+        \sigma^2_{ML}  78.122191   16.160158   4.834247  1.738740e-05  1.336507e-06     73.597430     82.646952
+        """
+        return self.labelers['stt'](
+            'STT', self.thetas_stt_of(**kws)
+        )
+
+    @Cache._property_tmp
+    def covmat(self):
+        r""" Returns labeled parameters-covariance matrices outcoming
+        from the currently specified model.
+
+        Example
+        -------
+        >>> o = Presenter(
+        ...     data_name = 'columbus',
+        ...     y_name    = 'CRIME',
+        ...     x_names   = ['INC', 'HOVAL'],
+        ...     id_name   = 'POLYID',
+        ...     verbose   = False,
+        ...     opverbose = False,
+        ... )
+        >>> _ = o.hat_run(AR_ks=[1], MA_ks=[4, 6])
+        >>> o.covmat
+        \\\\ COV ////    \beta_0  \beta_{INC}  \beta_{HOVAL}  \rho_{1}  \lambda_{4}  \lambda_{6}  \sigma^2_{ML}
+        \beta_0        22.255185    -0.715986       0.019400 -0.284952     0.194901    -0.114581       9.055682
+        \beta_{INC}    -0.715986     0.064761      -0.010798  0.006958    -0.013901     0.000230      -0.453305
+        \beta_{HOVAL}   0.019400    -0.010798       0.004771 -0.001465     0.003658     0.001065       0.119453
+        \rho_{1}       -0.284952     0.006958      -0.001465  0.006400    -0.003668     0.001329      -0.194041
+        \lambda_{4}     0.194901    -0.013901       0.003658 -0.003668     0.012255    -0.001044       0.350230
+        \lambda_{6}    -0.114581     0.000230       0.001065  0.001329    -0.001044     0.015129       0.042212
+        \sigma^2_{ML}   9.055682    -0.453305       0.119453 -0.194041     0.350230     0.042212     261.150703
+        
+        """
+        return self.labelers['cov'](
+            'COV', self.thetas_cov
+        )
+
+    def covmat_of(self, **kws):
+        r""" Returns labeled parameters-covariance matrices outcoming
+        from the specified model.
+
+        Example
+        -------
+        >>> o = Presenter(
+        ...     data_name = 'columbus',
+        ...     y_name    = 'CRIME',
+        ...     x_names   = ['INC', 'HOVAL'],
+        ...     id_name   = 'POLYID',
+        ...     verbose   = False,
+        ...     opverbose = False,
+        ... )
+        >>> o.covmat_of(AR_ks=[1], MA_ks=[4, 6])
+        \\\\ COV ////    \beta_0  \beta_{INC}  \beta_{HOVAL}  \rho_{1}  \lambda_{4}  \lambda_{6}  \sigma^2_{ML}
+        \beta_0        22.255185    -0.715986       0.019400 -0.284952     0.194901    -0.114581       9.055682
+        \beta_{INC}    -0.715986     0.064761      -0.010798  0.006958    -0.013901     0.000230      -0.453305
+        \beta_{HOVAL}   0.019400    -0.010798       0.004771 -0.001465     0.003658     0.001065       0.119453
+        \rho_{1}       -0.284952     0.006958      -0.001465  0.006400    -0.003668     0.001329      -0.194041
+        \lambda_{4}     0.194901    -0.013901       0.003658 -0.003668     0.012255    -0.001044       0.350230
+        \lambda_{6}    -0.114581     0.000230       0.001065  0.001329    -0.001044     0.015129       0.042212
+        \sigma^2_{ML}   9.055682    -0.453305       0.119453 -0.194041     0.350230     0.042212     261.150703
+        """
+        return self.labelers['cov'](
+            'COV', self.thetas_cov_of(**kws)
+        )
 
     def summary(self, moment='mean'):
         r""" Displays labeled arrays
