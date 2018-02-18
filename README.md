@@ -195,8 +195,12 @@ But one may want not to make any assumptions regarding spatial parameters distri
     ...     nbsamples = 10000     # Number of resamplings
     ... )
     
-10000 resamplings later, we get
+10000 resamplings later, for the economic parameters we see that using normal-approximation based confidence intervals is anything but "flat wrong", look:
 
 <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Bbeta0%5D%5Bdist%5D.png?raw=true" width="33%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Bbeta%7BHOVAL%7D%5D%5Bdist%5D.png?raw=true" width="33%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Bbeta%7BINC%7D%5D%5Bdist%5D.png?raw=true" width="33%"/>
+
+which is not true for spatial parameters:
+
+<img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Blambda%7B1%7D%5D%5Bdist%5D.png?raw=true" width="33%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Blambda%7B2%7D%5D%5Bdist%5D.png?raw=true" width="33%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Blambda%7B4%7D%5D%5Bdist%5D.png?raw=true" width="33%"/>
 
     
