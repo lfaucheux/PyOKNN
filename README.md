@@ -224,3 +224,6 @@ Note that the statistical table, previously called doing `o.table_test`, is now 
 Incidentally, others distribution have been generated in addition to those of the parameters
 
 <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Bsigma%5E2%7BML%7D%5D%5Bdist%5D.png?raw=true" width="33%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bcrt%5D%5Bllik%5D%5Bdist%5D.png?raw=true" width="33%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bcrt%5D%5BBIC%5D%5Bdist%5D.png?raw=true" width="33%"/>
+
+
+All the others charts (distribution and convergence plots) are viewable [here](https://github.com/lfaucheux/PyOKNN/tree/master/PyOKNN/examples).
