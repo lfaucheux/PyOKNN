@@ -6,7 +6,7 @@ __authors__ = [
     "laurent.faucheux@hotmail.fr",
 ]
 
-__version__ = '0.1.61'
+__version__ = '0.1.62'
 
 __all__     = [
     '__authors__',
@@ -49,13 +49,15 @@ import sys
 import os
 import re
 
-npopts = lambda p,b,w:np.set_printoptions(
-    precision=p, suppress=b, linewidth=w,
+
+npopts = lambda p,b,w,f=None:np.set_printoptions(
+    precision=p, suppress=b, linewidth=w, formatter=f
 )
 pdopts = lambda w:pd.set_option(
     'display.width', int(w)
 )
 
+name_eq_main = __name__ == '__main__'
 #*****************************************************************************#
 ##    ╦ ╦┌┐┌┬╦ ╦┌─┐┌─┐┬ ┬┌─┐┬─┐
 ##    ║ ║││││╠═╣├─┤└─┐├─┤├┤ ├┬┘
@@ -120,12 +122,12 @@ class UniHasher(object):
         return h
 
     @staticmethod
-    def _args_hash(args, kwargs):
+    def _args_hash(args, kws):
         hh = ''
         for a in args:
             h = UniHasher.hash_(a)
             hh += h
-        for kw, a in sorted(kwargs.items()):
+        for kw, a in sorted(kws.items()):
             hh += UniHasher.hash_(a)
         return _hash_(hh)
 
@@ -152,7 +154,7 @@ class Cache(UniHasher):
         True
         """
         self._cache = {}
-        self._tempo = {} 
+        self._tempo = {}
 
     @classmethod
     def _property(cls, meth):
@@ -179,13 +181,13 @@ class Cache(UniHasher):
     @classmethod
     def _method(cls, meth):
         @ft.wraps(meth)
-        def __method(cls, *args, **kwargs):
+        def __method(cls, *args, **kws):
             meth_name = '{}_{}'.format(
                 meth.__name__,
-                cls._args_hash(args, kwargs)
+                kws.get('cid') or cls._args_hash(args, kws)
             )
             if meth_name not in cls._cache:
-                cls._cache[meth_name] = meth(cls, *args, **kwargs)
+                cls._cache[meth_name] = meth(cls, *args, **kws)
             return cls._cache[meth_name]
         return __method
 
@@ -199,15 +201,16 @@ class Serializer(Cache):
     to dump/load objects into their instance-like format.
     """
 	
-    def __init__(self, **kwargs):
+    def __init__(self, **kws):
         super(Serializer, self).__init__()
         self._modes = {
             'hickle':{'r':'r', 'w':'w'}, 
             'pickle':{'r':'rb', 'w':'wb'}, 
         }[ckl.__name__]
-        self._ext  = kwargs.get('ext', 'ckl')
-        self._sdir = kwargs.get('sdir')
-        self._upd  = kwargs.get('update') or False
+        self._ext  = kws.get('ext', 'ckl')
+        self._sdir = kws.get('sdir')
+        self._upd  = kws.get('update') or False
+        self._to_upd = kws.get('to_update', [])
 
     @Cache._property
     def _ckle_save_dir(self):
@@ -237,7 +240,7 @@ class Serializer(Cache):
 
     def _may_do(self, _key_, lambda_):
         return self._load_ckle(_key_)\
-               if (self._ckle_exist(_key_) and _key_ not in [])\
+               if (self._ckle_exist(_key_) and _key_ not in self._to_upd)\
                else lambda_()
 
     def _may_dump(self, _key_, _value_):
@@ -253,7 +256,7 @@ class Serializer(Cache):
 ##    ╠╣ ││  ├┤ ║╣ ├┬┘├┬┘│ │├┬┘
 ##    ╚  ┴┴─┘└─┘╚═╝┴└─┴└─└─┘┴└─
 class FileError(object):
-    def __init__(self, **kwargs): self.ext = kwargs.get('ext')
+    def __init__(self, **kws): self.ext = kws.get('ext')
 
     def _file_not_found(self, name):
         message = ['',
@@ -262,22 +265,22 @@ class FileError(object):
             ' This may concern other files as well.'
         ]
         raise IOError(errno.ENOENT, '\n\t'.join(message).format(name))
-    def _file_not_unique(self, dirs, **kwargs):
+    def _file_not_unique(self, dirs, **kws):
         enum_dirs = map(lambda(i,d):'{0} - {1}'.format(i+1,d), enumerate(dirs))
         message = ['',
             '{name}.%s is not unique.'%self.ext,
             '{len_} files found.',
             '\n\t\t'.join(['']+enum_dirs)
         ]
-        print(IOError('%s2'%self.ext, '\n\t'.join(message).format(**kwargs)))
+        print(IOError('%s2'%self.ext, '\n\t'.join(message).format(**kws)))
         ix = raw_input('\tType the index of the one your want to work with:')
         return int(ix) - 1
-    def _unknown_error(self, **kwargs):        
+    def _unknown_error(self, **kws):        
         message = ['',
             " Something unexpected happened with {name}.%s"%self.ext,
             ' "{exc}"',         
         ]
-        raise IOError('%s3'%self.ext, '\n\t'.join(message).format(**kwargs))
+        raise IOError('%s3'%self.ext, '\n\t'.join(message).format(**kws))
 
 #*****************************************************************************#
 ##    ╔╦╗┌─┐┌┬┐┌─┐╔═╗┌─┐┌┬┐┌┬┐┌─┐┬─┐
@@ -322,16 +325,16 @@ class DataGetter(Cache):
             )[0]
         )
 
-    def _get_dir_of(self, name, ext, **kwargs):
+    def _get_dir_of(self, name, ext, **kws):
         """ Methode which gets the targeted file by its name
         and extension.    
         """
         dirs = getattr(self, '_{}_files'.format(ext)).get(name, [])
         len_ = len(dirs)
-        file_ix = self._from_id_to_index(dirs, kwargs.get('file_id'))
+        file_ix = self._from_id_to_index(dirs, kws.get('file_id'))
         if not len_:
             FileError(ext=ext)._file_not_found(name)            
-        elif len_ > 1 and kwargs.get('file_id') is None:
+        elif len_ > 1 and kws.get('file_id') is None:
             file_ix = FileError(ext=ext)._file_not_unique(
                 name=name, len_=len_,dirs=dirs
             )
@@ -382,9 +385,9 @@ class DataGetter(Cache):
         ('columbus', ['data\\COLUMBUS\\columbus.dbf'])
         """
         return self._map_all('dbf')    
-    def _get_dbf_dir(self, name, **kwargs):
+    def _get_dbf_dir(self, name, **kws):
         return self._get_dir_of(
-            name, 'dbf', **kwargs
+            name, 'dbf', **kws
         )
 
     @Cache._property
@@ -399,9 +402,9 @@ class DataGetter(Cache):
         ('columbus', ['data\\COLUMBUS\\columbus.shp'])
         """
         return self._map_all('shp')    
-    def _get_shp_dir(self, name, **kwargs):
+    def _get_shp_dir(self, name, **kws):
         return self._get_dir_of(
-            name, 'shp', **kwargs
+            name, 'shp', **kws
         )
         
 
@@ -411,7 +414,7 @@ class DataGetter(Cache):
 ##    ═╩╝┴ ┴ ┴ ┴ ┴╚═╝└─┘└┘└─┘└─┘ ┴ 
 class DataObject(DataGetter):
 
-    def __init__(self, data_name, y_name, x_names, **kwargs):
+    def __init__(self, data_name, y_name, x_names, **kws):
         super(DataObject, self).__init__()
 
         if os.path.isfile(data_name):
@@ -424,8 +427,8 @@ class DataObject(DataGetter):
         
         self.y_name   = y_name        
         self.x_names  = x_names
-        self.id_name  = kwargs.get('id_name')
-        self.srid     = kwargs.get('srid')
+        self.id_name  = kws.get('id_name')
+        self.srid     = kws.get('srid')
 
     @Cache._property
     def save_dir(self):
@@ -500,6 +503,11 @@ class DataObject(DataGetter):
         return self.y.shape[0]
 
     @Cache._property
+    def _up2n_line(self):
+        """ Multi-purpose auxiliary variable."""
+        return np.arange(self.n)
+
+    @Cache._property
     def points_array(self):
         """ Data-object rendered from a PySAL-opened shp-file source."""
         return ps.weights.util.get_points_array_from_shapefile(
@@ -509,6 +517,8 @@ class DataObject(DataGetter):
     @Cache._property
     def geoids(self):
         """ Names of spatial units."""
+        if self.id_name is None:
+            return self._up2n_line   
         return ps.weights.util.get_ids(self.shp_fname, self.id_name)
     
     @Cache._property
@@ -522,12 +532,11 @@ class DataObject(DataGetter):
 ##    ╚═╝┴  ═╩╝┴ ┴ ┴ ┴ ┴╚═╝└─┘└┘└─┘└─┘ ┴
 class SpDataObject(DataObject):
         
-    def __init__(self, **kwargs):
-        super(SpDataObject, self).__init__(**kwargs)
-        self._up2n_line = np.arange(self.n)
-        self.__ER_ks = kwargs.get('ER_ks', [])  
-        self.__AR_ks = kwargs.get('AR_ks', []) 
-        self.__MA_ks = kwargs.get('MA_ks', [])
+    def __init__(self, **kws):
+        super(SpDataObject, self).__init__(**kws)
+        self._ER_ks = kws.get('ER_ks', [])  
+        self._AR_ks = kws.get('AR_ks', []) 
+        self._MA_ks = kws.get('MA_ks', [])
 
     def from_scratch(self, **kws):
         """ Cleans cache from all objects that are not permanent
@@ -536,9 +545,9 @@ class SpDataObject(DataObject):
         like results.
         """
         self._tempo.clear()
-        self.__ER_ks = kws.get('ER_ks', [])  
-        self.__AR_ks = kws.get('AR_ks', []) 
-        self.__MA_ks = kws.get('MA_ks', [])
+        self._ER_ks = kws.get('ER_ks', [])  
+        self._AR_ks = kws.get('AR_ks', []) 
+        self._MA_ks = kws.get('MA_ks', [])
         
 
     @staticmethod
@@ -648,7 +657,7 @@ class SpDataObject(DataObject):
         return self._cache[_key_]
 
     @staticmethod
-    def psw_from_array(arr, **kwargs):
+    def psw_from_array(arr, **kws):
         """ Converts numpy.ndarray objects into pysal.weights.weights.W ones.
 
         Example
@@ -670,7 +679,7 @@ class SpDataObject(DataObject):
             raise ValueError(
                 "`arr` must be square"
             )            
-        tmp_ids   = kwargs.get('tmp_ids', np.arange(n))
+        tmp_ids   = kws.get('tmp_ids', np.arange(n))
         neighbors = dict([(i,[]) for i in tmp_ids])
         weights   = dict([(i,[]) for i in tmp_ids])
         arr_issym = np.allclose(arr, arr.T, atol=1e-8)
@@ -685,8 +694,8 @@ class SpDataObject(DataObject):
                     weights[j].append(v_ij)
                     neighbors[j].append(i)
         psw = ps.weights.W(neighbors, weights)
-        if 'ids' in kwargs:
-            psw.remap_ids(kwargs['ids'])
+        if 'ids' in kws:
+            psw.remap_ids(kws['ids'])
         return psw
 
     @staticmethod
@@ -854,7 +863,7 @@ class SpDataObject(DataObject):
         """ List of neighbor orders implied in the modeling of the
         error-autoregressive process.
         """
-        return filter(lambda k:k>0, sorted(self.__ER_ks))
+        return filter(lambda k:k>0, sorted(self._ER_ks))
     @Cache._property_tmp
     def ER_w_collection(self):
         """ List of weight matrices implied in the modeling of the
@@ -875,7 +884,7 @@ class SpDataObject(DataObject):
         """ List of neighbor orders implied in the modeling of the
         regressand-autoregressive process.
         """
-        return filter(lambda k:k>0, sorted(self.__AR_ks))
+        return filter(lambda k:k>0, sorted(self._AR_ks))
     @Cache._property_tmp
     def AR_w_collection(self):
         """ List of weight matrices implied in the modeling of the
@@ -896,7 +905,7 @@ class SpDataObject(DataObject):
         """ List of neighbor orders implied in the modeling of the
         moving average process.
         """
-        return filter(lambda k:k>0, sorted(self.__MA_ks))
+        return filter(lambda k:k>0, sorted(self._MA_ks))
     @Cache._property_tmp
     def MA_w_collection(self):
         """ List of weight matrices implied in the modeling of the
@@ -934,21 +943,59 @@ class SpDataObject(DataObject):
 ##    ╚═╝┴ ┴└─┘└─┘└─┘┴┴ ┴┘└┘╩ ╩╩═╝╩ ╩╩╚═╩╩ ╩╩ ╩    
 class GaussianMLARIMA(SpDataObject):
 
-    def __init__(self, **kwargs):
-        super(GaussianMLARIMA, self).__init__(**kwargs)
-        self._tolerance = kwargs.get('tolerance', 1.e-8)
-        self._nd_order  = kwargs.get('nd_order', 3.)
-        self._nd_step   = kwargs.get('nd_step', 1.e-6)
-        self._nd_method = kwargs.get('nd_method', 'central')
-        self.verbose   = kwargs.get('verbose', True)
-        self.opverbose = kwargs.get('opverbose', True)
+    def __init__(self, **kws):
+        """
+        Non-inherited parameters
+        ------------------------
+        verbose : bool, optional
+            Displays indicators of processes' progression (True by default).
+        opverbose : bool, optional
+            Displays minimizer's messages/warnings (True by default).
+           
+        
+        scipy's
+        *******
+        tolerance : float, optional
+            Tolerance for termination. (1.e-7 by default)
+
+        NB : check scipy's documentation for more details or do, e.g.
+        >> from scipy.optimize import minimize; help(minimize)
+            
+        numdifftools's
+        **************
+        nd_order : int, optional
+            Order of differentiation implied in the numerical approximation
+            of hessian matrices' components. (3 by default)
+        nd_step : float, optional
+            Spacing used for differentiation.
+        nd_method : str, optional
+            Method used for approximation. ('central' by default)
+
+        NB : check numdifftools's documentation for more details or do, e.g.
+        >> from numdifftools import Hessian; help(Hessian)
+        
+        """
+        super(GaussianMLARIMA, self).__init__(**kws)
+        self._tolerance = kws.get('tolerance', 1e-12 if name_eq_main else 1e-7)
+        self._nd_order  = kws.get('nd_order', 3)
+        self._nd_step   = kws.get('nd_step', 1.e-6)
+        self._nd_method = kws.get('nd_method', 'central')
+        self.verbose   = kws.get('verbose', True)
+        self.opverbose = kws.get('opverbose', True)
         self._thts_collection = {}
+        
+    to_save = [
+        'par',
+        'crt',
+##        'cov', #[!!!] Too time-consuming.
+##        'stt', #[!!!] stt needs covmat's diagonal.
+    ]
 
     @property
     def default_thts(self):
         return {
-            'par':{'stack':self.thetas},
-            'crt':{'stack':self.thetas_crt},
+            key:{'stack':getattr(self, 'thetas_%s'%key, self.thetas)}
+            for key in self.to_save
         }
     _mid2pnames = {}
     def _thts_collector(self, **kws):
@@ -966,12 +1013,8 @@ class GaussianMLARIMA(SpDataObject):
         ] + [
             r'\beta_{%s}'%xn for xn in self.x_names
         ] + self.p_names + [
-            r'\sigma^2'
+            r'\sigma^2_{ML}'
         ]
-        
-
-    @property
-    def initial_guesses_as_list(self): return self.p*[0.]
 
     @Cache._property
     def Idn(self):
@@ -1055,9 +1098,11 @@ class GaussianMLARIMA(SpDataObject):
     def RiSG(self):
         return self.dot(self.Ri, self.S, self.G)
     @Cache._property_tmp
+    def jac(self):
+        return np.linalg.det(self.RiSG)
+    @Cache._property_tmp
     def RiSGi(self):
         return np.linalg.inv(self.RiSG)
-
     @property
     def ysritysri(self): return np.dot(self.ysri.T, self.ysri)
     @Cache._property_tmp
@@ -1075,11 +1120,12 @@ class GaussianMLARIMA(SpDataObject):
     @Cache._property_tmp
     def levscale(self):
         return np.power(1. - np.power(self.leverage, 2.), -0.5)
-
     @Cache._property_tmp
-    def xritysri(self): return np.dot(self.xrit, self.ysri)
+    def xritysri(self): return np.dot(self.xrit, self.ysri)    
     @Cache._property_tmp
-    def betas(self): return np.dot(self.xritxrii, self.xritysri)
+    def betas(self): 
+        # np.linalg.solve(self.xritxri, self.xritysri) [MAY CUMULATE TOO MANY ROUNDING TRUNCATIONS]
+        return np.dot(self.xritxriixrit, self.ysri)
     @Cache._property_tmp
     def xribetas(self): return np.dot(self.xri, self.betas)
     @Cache._property_tmp
@@ -1091,7 +1137,7 @@ class GaussianMLARIMA(SpDataObject):
         return np.dot(self.usri.T, self.usri)
     @Cache._property_tmp
     def sig2(self):
-        """ (self.ysritysri - np.dot(self.xritysri.T, self.betas))/self.n """
+        # (self.ysritysri - np.dot(self.xritysri.T, self.betas))/self.n [MAY CUMULATE TOO MANY ROUNDING TRUNCATIONS]
         return self.usritusri/self.n
     @Cache._property_tmp
     def betas_cov(self): return self.sig2*self.xritxrii
@@ -1295,7 +1341,7 @@ class GaussianMLARIMA(SpDataObject):
         self.from_scratch(**kws)
         self.u_hull_chart
 
-    def hull_charter(self, u, save_fig=True):
+    def hull_charter(self, u, **kws):
         """ Makes the hull chart of `u`. The idea behind this chart is about
         pinpointing graphically space-dependent trend and/or variance.
         """
@@ -1353,9 +1399,9 @@ class GaussianMLARIMA(SpDataObject):
         # -- Legend
         self.__set_legend(handles=handles)
         
-        if save_fig:
+        if kws.get('save_fig', True):
             self.__fig_saver('RESID', 'HULLS', nbs_dep=False)
-        else:
+        if kws.get('show_fig', False):
             plt.show()            
         plt.clf()
         plt.close()
@@ -1365,6 +1411,11 @@ class GaussianMLARIMA(SpDataObject):
     def llik_maximizing_coeffs_as_list(self):
         r""" \hat{\theta}_{\mathrm{ML}} """
         return self._maximized_conc_llik_object.x
+
+    @property
+    def gammas_rhos_lambdas(self):
+        """ Alias for `self.llik_maximizing_coeffs_as_list`."""
+        return self.llik_maximizing_coeffs_as_list
 
     @Cache._property_tmp
     def conc_llik(self):
@@ -1393,7 +1444,7 @@ class GaussianMLARIMA(SpDataObject):
         return res
 
     _crt_names = [
-        ('llik'                 , 'llik'),
+        ('llik'                 , 'full_llik'),
         ('HQC'                  , 'hannan_quinn'),
         ('BIC'                  , 'schwarz'),
         ('AIC'                  , 'akaike'),
@@ -1408,27 +1459,7 @@ class GaussianMLARIMA(SpDataObject):
         ("BP's Pr(>|B|)"        , None),
         ("KB's K"               , 'koenker_bassett'),
         ("KB's Pr(>|K|)"        , None),
-##        ("Wh's w"               , 'white'),
-##        ("Wh's Pr(>|w|)"        , None),
-    ]   
-    @Cache._property_tmp
-    def llik(self):
-        """ Shorcut for `self.full_llik`.
-
-        Chk
-        ---
-        >>> o = GaussianMLARIMA(
-        ...     data_name = 'columbus',
-        ...     y_name    = 'CRIME',
-        ...     x_names   = ['INC', 'HOVAL'],
-        ...     id_name   = 'POLYID',
-        ... )
-        >>> o.llik
-        array([[-187.37723881]])
-        >>> o.full_llik
-        array([[-187.4251219]])
-        """
-        return self.conc_llik - .5*self.n * ( np.log(2.*np.pi) + 1.)
+    ]  
     @Cache._property_tmp
     def hannan_quinn(self):
         """ Hannan–Quinn information criterion (HQC). """
@@ -1485,12 +1516,6 @@ class GaussianMLARIMA(SpDataObject):
         return self._dict2arr_frmt(ps.spreg.diagnostics.koenker_bassett(
             self._ps_testable_inst
         ), 'kb')
-##    @Cache._property_tmp
-##    def white(self):
-##        return self._dict2arr_frmt(ps.spreg.diagnostics.white(
-##            self._ps_testable_inst
-##        ), 'wh')
-
     @Cache._property_tmp
     def thetas_crt(self):
         lst = []
@@ -1515,7 +1540,7 @@ class GaussianMLARIMA(SpDataObject):
         return np.vstack([
             self.betas,
             self.llik_maximizing_coeffs,
-            self.sig2n_k,
+            self.sig2#n_k,
         ])
 
     @Cache._property_tmp
@@ -1523,6 +1548,30 @@ class GaussianMLARIMA(SpDataObject):
         return self.thetas.flatten().tolist()
 
     def _full_llik_computer(self, _thetas):
+        """ Returns (full) log-likelihood. Formulated so as to obtain second
+        derivatives with respect to the parameters.
+
+        Example
+        -------
+        >>> o = GaussianMLARIMA(
+        ...     data_name = 'columbus',
+        ...     y_name    = 'CRIME',
+        ...     x_names   = ['INC', 'HOVAL'],
+        ...     id_name   = 'POLYID',
+        ...     opverbose = False,
+        ... )
+        >>> o._AR_ks = [1, 2]
+        >>> o._full_llik_computer([
+        ...    43.06976402678653   , -0.9483216077864456, -0.2695103444402416,
+        ...     0.19099696507708683,  0.2588788504534716, 92.61892002235702  ,
+        ... ])
+        array([[-179.96412919]])
+
+        Note that just above `o._full_llik_computer` is actually evaluated
+        at $\hat{\theta}_{\mathrm{ML}}$, code-namely `o.thetas`.
+        >>> o._full_llik_computer(o.thetas_as_list)
+        array([[-179.82717792]])
+        """
         k                    = self.k
         p                    = self.p
         kp                   = k + p
@@ -1541,14 +1590,105 @@ class GaussianMLARIMA(SpDataObject):
             variance = _sig2,
             rss      = _rss
         )
-        return _fgll   
+        return _fgll
     def _full_llik_core_computer(self, jacobian, variance, rss):
-        return np.log(jacobian)\
-               - .5*self.n*np.log(2.*np.pi*variance)\
+        """ Returns (full) log-likelihood.
+
+        Example
+        -------
+        >>> o = GaussianMLARIMA(
+        ...     data_name = 'columbus',
+        ...     y_name    = 'CRIME',
+        ...     x_names   = ['INC', 'HOVAL'],
+        ...     id_name   = 'POLYID',
+        ...     opverbose = False,
+        ... )
+        >>> jac, sig2, rss = 0.136961999519103, 92.6189200224, 4075.23248098
+        >>> o._full_llik_core_computer(jac, sig2, rss)
+        -179.96412919101235
+        
+        Note that just above `o._full_llik_core_computer` is actually evaluated
+        at quantities which derive from $\hat{\theta}_{\mathrm{ML}}$, in the
+        AR{1,2} case.
+        >>> o._AR_ks = [1, 2]
+        >>> o.full_llik.item()
+        -179.82717791831826
+        """
+        return np.log(jacobian) - .5*self.n * np.log(2.*np.pi*variance)\
                - rss/(2.*variance)
 
     @Cache._property_tmp
+    def llik(self):
+        """ Returns log-likelihoods.
+
+        Example
+        -------
+        >>> o = GaussianMLARIMA(
+        ...     data_name = 'columbus',
+        ...     y_name    = 'CRIME',
+        ...     x_names   = ['INC', 'HOVAL'],
+        ...     id_name   = 'POLYID',
+        ... )
+        >>> o.llik
+        array([[-187.37723881]])
+        >>> o.full_llik
+        array([[-187.37723881]])
+
+        >>> o.from_scratch(ER_ks=[1])
+        >>> o.llik
+        Optimization terminated successfully.
+                 Current function value: 115.004752
+                 Iterations: 48
+                 Function evaluations: 105
+        array([[-184.53273963]])
+        >>> o.full_llik
+        array([[-184.53273963]])
+
+        >>> o.from_scratch(
+        ...     AR_ks=[1, 2],
+        ...     MA_ks=[4],
+        ...     ER_ks=[12],
+        ... )
+        >>> o.llik
+        Optimization terminated successfully.
+                 Current function value: 106.689925
+                 Iterations: 338
+                 Function evaluations: 638
+        array([[-176.217913]])
+        >>> o.full_llik
+        array([[-176.217913]])
+        """
+        #np.log(jacobian) - .5*self.n*np.log(variance) - .5*self.n * ( np.log(2.*np.pi) + 1.)
+        #np.log(jacobian) - .5*self.n * ( np.log(2.*np.pi)+ np.log(variance) + 1.)
+        #np.log(jacobian) - .5*self.n * ( np.log(2.*np.pi*variance) + 1.)
+        #np.log(jacobian) - .5*self.n * np.log(2.*np.pi*variance) - .5*self.n
+        return self.conc_llik - .5*self.n * ( np.log(2.*np.pi) + 1.)
+
+    @Cache._property_tmp
     def full_llik(self):
+        """ Log-likelihood evaluated at $\hat{\theta}_{\mathrm{ML}}$.
+
+        Example
+        -------
+        >>> o = GaussianMLARIMA(
+        ...     data_name = 'columbus',
+        ...     y_name    = 'CRIME',
+        ...     x_names   = ['INC', 'HOVAL'],
+        ...     id_name   = 'POLYID',
+        ...     opverbose = False,
+        ... )
+        >>> o._AR_ks = [12, 22]
+        >>> o._full_llik_computer([
+        ...    79.19795367735526   , -1.6822507035637728 ,  -0.26919340930707486,
+        ...    -0.14094043293817296, -0.08509912061832947, 116.32195627123622   ,
+        ... ])
+        array([[-186.16744798]])
+
+        Note that just above `o._full_llik_computer` is actually evaluated
+        at $\hat{\theta}_{\mathrm{ML}}$, code-namely `o.thetas`.
+        >>> o.full_llik
+        array([[-186.16744798]])
+        """
         return self._full_llik_computer(
             self.thetas_as_list
         )    
@@ -1556,8 +1696,9 @@ class GaussianMLARIMA(SpDataObject):
     @Cache._property_tmp
     def full_llik_hessian_computer(self):
         r"""
-        Callable returning hessian matrices, which consist of second
-        derivatives of the likelihood function with respect to the
+        Returns a callable capable of computing hessian matrices evaluated
+        at some (hyper-) point. Remember that this hessian matrices' components
+        consist of second derivatives of the likelihood function with respect to the
         parameters. The Hessian is defined as:
         $$
         \mathbf{H}(\theta)=
@@ -1565,16 +1706,46 @@ class GaussianMLARIMA(SpDataObject):
             l(\theta),
             ~~~~ 1\leq i, j\leq p
         $$
+
+        Example
+        -------
+        >>> o = GaussianMLARIMA(
+        ...     data_name = 'columbus',
+        ...     y_name    = 'CRIME',
+        ...     x_names   = ['INC', 'HOVAL'],
+        ...     id_name   = 'POLYID',
+        ...     opverbose = False,
+        ... )
+        >>> o._ER_ks, o._AR_ks, o._MA_ks = [1], [2], [4, 5]
+        >>> hcomputer = o.full_llik_hessian_computer
+        >>> type(hcomputer)
+        <class 'numdifftools.core.Hessian'>
+
+        We can now evaluate this function, say, at $\hat{\theta}_{\mathrm{ML}}$,
+        >>> computed_h = hcomputer(o.thetas_as_list)
+        >>> computed_h
+        array([[  -0.21593187,   -3.16953753,   -9.23825195,   -0.05218509,   -6.53993419,   -0.19918455,    0.09379909,    0.        ],
+               [  -3.16953753,  -79.717884  , -204.10758101,    3.57421133,  -70.51950825,  -13.65024788,   27.70386894,   -0.        ],
+               [  -9.23825195, -204.10758101, -798.83993948,   -2.21191966, -231.20684196,   68.49722196,  127.95296062,    0.        ],
+               [  -0.05218509,    3.57421133,   -2.21191966, -118.03070229,  -52.79686865,   -0.00619979,   -7.48157319,   -0.0422948 ],
+               [  -6.53993419,  -70.51950825, -231.20684196,  -52.79686865, -339.86316692,   -5.56253156,  -20.47547473,   -0.03591995],
+               [  -0.19918455,  -13.65024788,   68.49722196,   -0.00619979,   -5.56253156, -109.38337939,  -57.48321859,    0.10652965],
+               [   0.09379909,   27.70386894,  127.95296062,   -7.48157319,  -20.47547473,  -57.48321859,  -77.2689966 ,    0.02243485],
+               [   0.        ,   -0.        ,    0.        ,   -0.0422948 ,   -0.03591995,    0.10652965,    0.02243485,   -0.00332004]])
+
+        Which, multiplied by -1, equals the so-called observed fisher matrix.
+        >>> (-computed_h == o.obs_fisher_matrix).all()
+        True
         """
         return nd.Hessian(
             self._full_llik_computer,
-##            step = nd.MinStepGenerator(
-##                base_step=self._nd_step,
-##                step_ratio=None,
-##                num_extrap=0
-##            ),
-##            order  = self._nd_order,
-##            method = self._nd_method
+##            step = nd.MinStepGenerator(     P
+##                base_step=self._nd_step,    R
+##                step_ratio=None,            O
+##                num_extrap=0                B
+##            ),                              L
+##            order  = self._nd_order,        E
+##            method = self._nd_method        M
         )
 
     @Cache._property_tmp
@@ -1582,11 +1753,26 @@ class GaussianMLARIMA(SpDataObject):
         r"""
         The so-called observed information matrix, which consists of the
         Fisher information matrix, $\mathbf{I}(\theta)$, evaluated at the
-        maximum likelihood estimates (MLE), i.e.
+        maximum likelihood estimates (MLE), $\hat{\theta}_{\mathrm{ML}}$,
+        i.e.
         $$
         \mathbf{I}(\hat{\theta}_{\mathrm{ML}})=
             -\mathbf{H}(\hat{\theta}_{\mathrm{ML}})
         $$
+
+        Example
+        -------
+        >>> o = GaussianMLARIMA(
+        ...     data_name = 'columbus',
+        ...     y_name    = 'CRIME',
+        ...     x_names   = ['INC', 'HOVAL'],
+        ...     id_name   = 'POLYID',
+        ... )
+        >>> o.obs_fisher_matrix
+        array([[  0.39917586,   5.73812859,  15.34281308,  -0.        ],
+               [  5.73812859,  95.20485582, 241.13840591,  -0.        ],
+               [ 15.34281308, 241.13840591, 723.05916578,  -0.        ],
+               [ -0.        ,  -0.        ,  -0.        ,   0.00162593]])
         """
         return - self.full_llik_hessian_computer(
             self.thetas_as_list
@@ -1602,13 +1788,33 @@ class GaussianMLARIMA(SpDataObject):
         \mathrm{Var}(\hat{\theta}_{\mathrm{ML}})=
             [\mathbf{I}(\hat{\theta}_{\mathrm{ML}})]^{-1}
         $$
+
+        Example
+        -------
+        >>> o = GaussianMLARIMA(
+        ...     data_name = 'columbus',
+        ...     y_name    = 'CRIME',
+        ...     x_names   = ['INC', 'HOVAL'],
+        ...     id_name   = 'POLYID',
+        ... )
+        >>> o.obs_cov_matrix
+        array([[ 21.05188021,  -0.88465637,  -0.15167561,  -0.        ],
+               [ -0.88465637,   0.10480806,  -0.01618143,   0.        ],
+               [ -0.15167561,  -0.01618143,   0.00999793,  -0.        ],
+               [ -0.        ,   0.        ,  -0.        , 615.03174058]])
+
+        In accordance with its (asymptotic) theoretically-grounded counterpart
+        >>> o.betas_cov
+        array([[21.05188021, -0.88465637, -0.15167561],
+               [-0.88465637,  0.10480806, -0.01618143],
+               [-0.15167561, -0.01618143,  0.00999793]])
         """
         return np.linalg.inv(
             self.obs_fisher_matrix
         )
     @property
     def thetas_cov(self):
-        """ Alias for self.obs_cov_matrix."""
+        """ Alias for `self.obs_cov_matrix`."""
         return self.obs_cov_matrix
     @Cache._property_tmp
     def thetas_se(self):
@@ -1675,8 +1881,7 @@ class GaussianMLARIMA(SpDataObject):
             self.n,
             self.k,
             self.p
-        )
-            
+        )            
 
     @Cache._property_tmp
     def llik_maximizing_coeffs(self):
@@ -1684,26 +1889,96 @@ class GaussianMLARIMA(SpDataObject):
 
     @Cache._property_tmp
     def _maximized_conc_llik_object(self):
-        x0 = self.initial_guesses_as_list
+        """ Object of type `<class 'scipy.optimize.optimize.OptimizeResult'>`
+        whose one of attributes is, hopefully, the concentrated underlier of
+        $\hat{\theta}_{\mathrm{ML}}$, the spatial parameter(s).
+        NB : when the concentrated log-likelihood is evaluated with no*
+        spatial parameters, the optimizer warns that it has found no
+        solutions. This is simply because the (empty) initial guess IS
+        the solution: when concentrated with respect to nothing, the
+        log-likelihood is actually evaluated at its analytical solutions.
+
+        Example
+        -------
+        >>> o = GaussianMLARIMA(
+        ...     data_name = 'columbus',
+        ...     y_name    = 'CRIME',
+        ...     x_names   = ['INC', 'HOVAL'],
+        ...     id_name   = 'POLYID',
+        ...     opverbose = False,
+        ... )
+        >>> o._AR_ks = [1]
+        >>> optzd = o._maximized_conc_llik_object
+        >>> optzd
+         final_simplex: (array([[0.32015173],
+               [0.32015173]]), array([112.66576367, 112.66576367]))
+                   fun: 112.66576366678524
+               message: 'Optimization terminated successfully.'
+                  nfev: 106
+                   nit: 48
+                status: 0
+               success: True
+                     x: array([0.32015173])
+
+        The spatial autoregressive parameter is
+        >>> optzd.x
+        array([0.32015173])
+
+        The value of the concentrated log-likelihood at `optzd.x` is
+        >>> - optzd.fun
+        -112.66576366678524
+
+        which is stored in `o.conc_llik`
+        >>> o.conc_llik
+        array([[-112.66576367]])
+        
+        """
+        x0 = self.p*[.0]
         try:
-            return sc.optimize.minimize(
+            optzd = sc.optimize.minimize(
                 x0      = x0,
-                fun     = lambda xN : -self._conc_llik_computer(xN),
-                #tol     = self._tolerance,
+                fun     = lambda xN: -self._conc_llik_computer(xN),
+                tol     = self._tolerance,
                 method  = 'Nelder-mead',
                 options = {
-                    'disp' : self.p and self.opverbose,
+                    'disp'   : self.p and self.opverbose,
+                    'maxiter': self.p*200,
+                    'maxfev' : self.p*200,
                 },
-            )
+            )          
+            return optzd                
         except Exception as exc:
-            print(exc.message)
+            print(exc.message, end="\n")
             return type(
-                'optimerr',
-                (object,),
-                {'success':False, 'x':x0}
+                'optimerr', (object,), {
+                    'success':None, 'x':x0
+                }
             )
 
     def _conc_llik_computer(self, _gammas_rhos_lambdas):
+        """ Returns concentrated log-likelihood.
+
+        Example
+        -------
+        >>> o = GaussianMLARIMA(
+        ...     data_name = 'columbus',
+        ...     y_name    = 'CRIME',
+        ...     x_names   = ['INC', 'HOVAL'],
+        ...     id_name   = 'POLYID',
+        ...     opverbose = False,
+        ... )
+        >>> o._AR_ks = [1, 2]
+        >>> o._conc_llik_computer([
+        ...    0.19099696507708683, 0.2588788504534716,
+        ... ])
+        array([[-110.29918979]])
+
+        Note that just above `o._conc_llik_computer` is actually evaluated
+        evaluated at $\hat{\theta}_{\mathrm{ML}}$'s spatial-determinants,
+        namely, `o.gammas_rhos_lambdas`.
+        >>> o._conc_llik_computer(o.gammas_rhos_lambdas)
+        array([[-110.29918979]])
+        """
         _ysri, _xri, _G, _S, _Ri, _ = self._yNx_filterer(
             _gammas_rhos_lambdas
         )
@@ -1714,7 +1989,8 @@ class GaussianMLARIMA(SpDataObject):
         _betas        = np.dot(_xritxriixrit, _ysri)
         _xribetas     = np.dot(_xri, _betas)
         _r            = _ysri - _xribetas
-        _sig2         = np.dot(_r.T, _r)/n
+        _rss          = np.dot(_r.T, _r)
+        _sig2         = _rss/n
         _RiSG         = np.dot(_Ri, np.dot(_S, _G))
         _jac          = np.linalg.det(_RiSG)
         _cgll         = self._conc_llik_core_computer(
@@ -1724,10 +2000,54 @@ class GaussianMLARIMA(SpDataObject):
         return _cgll
 
     def _conc_llik_core_computer(self, jacobian, variance):
-        return np.log(jacobian)\
-               - .5*self.n*np.log(variance)
+        """ Returns concentrated log-likelihood.
+
+        Example
+        -------
+        >>> o = GaussianMLARIMA(
+        ...     data_name = 'columbus',
+        ...     y_name    = 'CRIME',
+        ...     x_names   = ['INC', 'HOVAL'],
+        ...     id_name   = 'POLYID',
+        ...     opverbose = False,
+        ... )
+        >>> jac, sig2 = 0.136961999519103, 92.6189200224
+        >>> o._conc_llik_core_computer(jac, sig2)
+        -112.93614106401363
+        
+        Note that just above `o._conc_llik_core_computer` is actually evaluated
+        at quantities which derive from $\hat{\theta}_{\mathrm{ML}}$ in the
+        AR{1,2} case.
+        >>> o._AR_ks = [1, 2]
+        >>> o.full_llik.item()
+        -179.82717791831826
+        """
+        return np.log(jacobian) - .5*self.n*np.log(variance)
 
     def _yNx_filterer(self, gammas_rhos_lambdas):
+        r""" Returns `gammas_rhos_lambdas`-determined spatial filters
+        and filtered model's variables.
+        NB: this methid is defined to comply with the D.R.Y. principle.
+        Its core is involved in self._conc_llik_core_computer as well
+        as in self._full_llik_core_computer.
+
+        Chk
+        ---
+        >>> o = GaussianMLARIMA(
+        ...     data_name = 'columbus',
+        ...     y_name    = 'CRIME',
+        ...     x_names   = ['INC', 'HOVAL'],
+        ...     id_name   = 'POLYID',
+        ...     opverbose = False,
+        ... )
+        >>> o._AR_ks = [1, 2]
+        >>> h = o.hash_(o._yNx_filterer([
+        ...    0.19099696507708683, 0.2588788504534716,
+        ... ]))
+        >>> yNx_filterer_as_expected = 'jmRSJwC/AqELU/fumF6U2A==\n' == h
+        >>> yNx_filterer_as_expected
+        True
+        """
         ER_p   = self.ER_p
         AR_p   = self.AR_p
         ERAR_p = ER_p + AR_p
@@ -1890,8 +2210,8 @@ class XACFMaker(GaussianMLARIMA):
             self.__QK:self.__BnQ_figs_kwarger('Quenouille'),
         }
     
-    def __init__(self, **kwargs):
-        super(XACFMaker, self).__init__(**kwargs)
+    def __init__(self, **kws):
+        super(XACFMaker, self).__init__(**kws)
         self._k_domain = self._up2n_line[:, None]
         self._k_domain_aslist  = self._up2n_line.tolist()
         self._empty_arr = np.zeros_like(self._k_domain).astype(np.float64)
@@ -1964,17 +2284,18 @@ class XACFMaker(GaussianMLARIMA):
 
         Chk 
         ---
+        >>> o.z_unil  = 1.6448536269514722
         >>> hashs_ref = {
-        ...     'u': 'u2mcxvWwqQN52zLVemvoqA==\n',
-        ...     'PACF': (
+        ...     'u': 'VuzlpLO+nRQJVPTEDUDv6w==\n',
+        ...     'PACF':(
         ...         ('Qs', 'l7gWSnn7Vhohx+PzGIOaiA==\n'),
-        ...         ('Rs', 'Ney8wPS2VpYjGc80KXS2rQ==\n')
+        ...         ('Rs', '6+FSrlcQXQLSx1iO5nLnDQ==\n')
         ...     ),
         ...     'ACF': (
-        ...         ('Bs', 'GUx0lAGhCu2BVBNr+BjAsg==\n'),
-        ...         ('Gs', 'Txc5idb4KyG7KSk0HjTb7w==\n'),
-        ...         ('Ms', 'LKuiqU62uEXCOdXKvwtNMg==\n'),
-        ...         ('Rs', '72cHWJadnMEbcQClKWHWdA==\n')
+        ...         ('Bs', 'RGYusgaf/BYAJu1r8O15yA==\n'),
+        ...         ('Gs', 'nyjG/8cgOc4X89DzsTHHfQ==\n'),
+        ...         ('Ms', '2vmYqYdhxxGOQmzS1pmR3A==\n'),
+        ...         ('Rs', '5K9ljWV22t9jUYf/4FdcQA==\n')
         ...     )
         ... }
         >>> hashs_ref_as_set = set(tuple(hashs_ref.items()))
@@ -2051,14 +2372,14 @@ class XACFMaker(GaussianMLARIMA):
         self.from_scratch(**kws)
         self.u_XACF_chart
 
-    def XACF_charter(self, save_fig=False, **kwargs):
+    def XACF_charter(self, **kws):
         """ Plots both ACFs and PACFs following formats defined
         via self._figs_kwarger.      
         """
-        if 'u' in kwargs:
-            stats = self.XACF_computer(kwargs['u'])
-        elif 'stats' in kwargs:
-            stats = kwargs['stats']
+        if 'u' in kws:
+            stats = self.XACF_computer(kws['u'])
+        elif 'stats' in kws:
+            stats = kws['stats']
         else:
             raise TypeError(
                 "XACF_charter() takes at least either "
@@ -2099,9 +2420,9 @@ class XACFMaker(GaussianMLARIMA):
                 handlelength=1
             )
         
-        if save_fig:
+        if kws.get('save_fig', True):
             self._GaussianMLARIMA__fig_saver('RESID', '(P)ACF', nbs_dep=False)
-        else:
+        if kws.get('show_fig', False):
             plt.show()
 
         plt.clf()
@@ -2112,15 +2433,12 @@ class XACFMaker(GaussianMLARIMA):
 ##    ╚═╗├─┤│││├─┘│  ├┤ ├┬┘
 ##    ╚═╝┴ ┴┴ ┴┴  ┴─┘└─┘┴└─
 class Sampler(XACFMaker):
-    def __init__(self, **kwargs):
-        super(Sampler, self).__init__(**kwargs)  
+    def __init__(self, **kws):
+        super(Sampler, self).__init__(**kws)
         self.Idn0     = copy.copy(self.Idn)
         self.y0       = copy.copy(self.y)
         self.x0       = copy.copy(self.x)
         self.n0       = copy.copy(self.n)
-        self.RiSGi0   = copy.copy(self.RiSGi)
-        self.ysrihat0 = copy.copy(self.xribetas)
-        self.usri0    = copy.copy(self.usri)
         self._jk_i = None
         self._bt_s = None
 
@@ -2146,7 +2464,7 @@ class Sampler(XACFMaker):
                 as_psw=False
             ),
             ks
-        ), ixs
+        ), ixs        
 
     def _set_hat_env(self, **kws):
         self.from_scratch(**kws)
@@ -2156,7 +2474,7 @@ class Sampler(XACFMaker):
         _c['x']   = self.x0
         _c['n']   = self.n0
 
-    def _set_jk_env(self, **kws):
+    def _set_jk_i_env(self, **kws):
         self.from_scratch(**kws)
         _c, _t = self._cache, self._tempo  
         _w_cllctr, ixs = self.get_jk_w_collector_and_ixs()
@@ -2168,14 +2486,14 @@ class Sampler(XACFMaker):
         _t['AR_w_collection'] = _w_cllctr(self.AR_ks)
         _t['MA_w_collection'] = _w_cllctr(self.MA_ks)
 
-    def _set_bt_env(self, **kws):
+    def _set_bt_s_env(self, **kws):
         self.from_scratch(**kws)
-        _c, _t  = self._cache, self._tempo  
+        _c      = self._cache
         ixs     = self.get_bt_ixs()
         _c['y'] = np.dot(
             self.RiSGi0,
             self.ysrihat0 + self._r_rs_standardizer(
-                self.usri0[ixs],
+                self.usri0[ixs], self.levscale0
             )
         )
 
@@ -2186,11 +2504,11 @@ class Sampler(XACFMaker):
         """
         return np.power(-self.ones, self._up2n_line[:, None])
 
-    def _r_rs_standardizer(self, r_rs):         
+    def _r_rs_standardizer(self, r_rs, lsca):         
         n          = self.n
         _unbiaser  = np.sqrt(n/(n - 1))
-        _av_scaler = -np.sum(r_rs*self.levscale)/n
-        return _unbiaser*(r_rs*self.levscale + _av_scaler)*self.grandi_vector
+        _av_scaler = -np.sum(r_rs*lsca)/n
+        return _unbiaser*(r_rs*lsca + _av_scaler)*self.grandi_vector
 
     def get_bt_ixs(self):
         """ Returns the resampled list of individuals' index that are kept
@@ -2233,20 +2551,16 @@ class Metrician(Sampler):
     }
 
     def __figs_plter(self, key, val, larg):
-        kwargs = self.__figs_kwarger[key](
+        kws = self.__figs_kwarger[key](
             val, larg
         )
-        getattr(plt, kwargs.pop('meth'))(
-            **kwargs
+        getattr(plt, kws.pop('meth'))(
+            **kws
         )
 
-    def __init__(self, **kwargs):
-        super(Metrician, self).__init__(**kwargs)
-        self._nb_resamples = int(kwargs.get('nbsamples', 2000))
-        self.to_save = [
-            'par', 'crt',
-##          'cov', 'stt', #[!!!] Too time-consuming. stt needs cov's diagonal.
-        ]
+    def __init__(self, **kws):
+        super(Metrician, self).__init__(**kws)
+        self._nb_resamples = int(kws.get('nbsamples', 2000))
 
     @Cache._property_tmp
     def _key2rnames(self):
@@ -2257,8 +2571,7 @@ class Metrician(Sampler):
             'stt':self.par_names,
         }
 
-    def _run(self):
-        self.thetas
+    def _run(self): self.thetas
 
     @Cache._property_tmp
     def _thts_tmpl(self):
@@ -2269,13 +2582,7 @@ class Metrician(Sampler):
             key:{'stack': None}
             for key in self.to_save
         }
-    _just_computed = {None:None}
-    def _i_results_computer(self, keyed_thts, obj):
-        hash_obj = self.hash_(obj)
-        if hash_obj in self._just_computed:
-            #print('--- JUST COMPUTED ---')
-            return self._just_computed[hash_obj]
-        
+    def _i_results_computer(self, keyed_thts, obj):        
         if keyed_thts['stack'] is None:
             stack     = obj
             mean_conv = obj
@@ -2296,46 +2603,12 @@ class Metrician(Sampler):
                     stack, axis=2, keepdims=True, ddof=1
                 )
             ))
-        st_mc_sc = stack, mean_conv, std_conv
-        self._just_computed = {
-            hash_obj: st_mc_sc
-        }
-        return st_mc_sc
-
-    _z_score_max = 7.
-    def _z_score_controler_say_no(self, thts_par):
-        """ Validate parameters estimates if none of those is at
-        a greater-than `self._z_score_max`-sigmas distance from
-        its running mean.
-        """
-        if thts_par['stack'] is None:
-            return False
-
-        st_, mc_, sc_ = self._i_results_computer(thts_par, self.thetas)
-        st , mc , sc  = st_[:,:,-1:], mc_[:,:,-1:], sc_[:,:,-1:]
-        z_score = np.abs(st - mc)/sc
-        if (z_score > self._z_score_max).any():
-            print(
-                'Warning: '
-                'One of the parameters is at a '
-                'greater-than %d-sigmas distance '
-                'from its running mean.'
-                '\n\t All resample-based outcomes are rejected.'
-                %self._z_score_max
-            )                  
-            return True
-        return False
+        return stack, mean_conv, std_conv
         
-    def _save_i_results(self, thts):
-        key, obj = 'par', self.thetas
-        st, mc, sc = self._i_results_computer(thts[key], obj)
-        thts[key]['stack']     = st
-        thts[key]['mean_conv'] = mc
-        thts[key]['std_conv']  = sc
-        
+    def _save_i_results(self, thts):        
         other_objs_to_save = [
-            (key, getattr(self, 'thetas_%s'%key))
-            for key in self.to_save if key != 'par'           
+            (key, getattr(self, 'thetas_%s'%key, self.thetas))
+            for key in self.to_save         
         ]
         for key, obj in other_objs_to_save:
             st, mc, sc = self._i_results_computer(thts[key], obj)
@@ -2354,7 +2627,7 @@ class Metrician(Sampler):
             )
 
     def hat_run(self, **kws):
-        """ Caching/serializing wrapper of self._hat_run.
+        """ "Public" wrapper of self._hat_run.
 
         Example
         -------
@@ -2375,10 +2648,10 @@ class Metrician(Sampler):
         ... }
         >>> hat_results = o.hat_run(**run_kwargs)
         >>> o.thetas_cov
-        array([[ 22.42482892,  -0.94235135,  -0.16156749,   0.        ],
-               [ -0.94235135,   0.11164337,  -0.01723674,   0.        ],
-               [ -0.16156749,  -0.01723674,   0.01064997,  -0.        ],
-               [  0.        ,   0.        ,  -0.        , 795.24628791]])
+        array([[ 21.05188021,  -0.88465637,  -0.15167561,  -0.        ],
+               [ -0.88465637,   0.10480806,  -0.01618143,   0.        ],
+               [ -0.15167561,  -0.01618143,   0.00999793,  -0.        ],
+               [ -0.        ,   0.        ,  -0.        , 615.03174058]])
 
         Then an example with multiple spatial parameters, e.g. involving (i) a
         1st neighbor-order-based (partial) differencing, (ii) a 2nd neighbor-
@@ -2392,36 +2665,33 @@ class Metrician(Sampler):
         ... }
         >>> hat_results = o.hat_run(**run_kwargs)
         >>> o.thetas_cov
-        array([[ 54.4809296 ,  -1.84502206,   0.00342826,   0.12955141,  -0.81519065,   0.62122773,  28.33119842],
-               [ -1.84502206,   0.12774818,  -0.01942022,   0.00683215,   0.0240067 ,  -0.03171117,  -0.89739894],
-               [  0.00342826,  -0.01942022,   0.01014639,   0.0002697 ,  -0.00385608,   0.01133015,   0.11799748],
-               [  0.12955141,   0.00683215,   0.0002697 ,   0.02038757,  -0.00723236,   0.0013995 ,   0.09174917],
-               [ -0.81519065,   0.0240067 ,  -0.00385608,  -0.00723236,   0.0195459 ,  -0.01995175,  -0.63160178],
-               [  0.62122773,  -0.03171117,   0.01133015,   0.0013995 ,  -0.01995175,   0.05767519,   0.61264511],
-               [ 28.33119842,  -0.89739894,   0.11799748,   0.09174917,  -0.63160178,   0.61264511, 484.41122657]])
+        array([[ 51.28218262,  -1.72251913,   0.005793  ,   0.13816817,  -0.77809545,   0.58460032,  22.53934157],
+               [ -1.72251913,   0.11802467,  -0.01781421,   0.00617914,   0.02257574,  -0.02903433,  -0.70596416],
+               [  0.005793  ,  -0.01781421,   0.00927433,   0.00031505,  -0.00357443,   0.01018458,   0.09167906],
+               [  0.13816817,   0.00617914,   0.00031505,   0.01972134,  -0.00727362,   0.00163422,   0.08249111],
+               [ -0.77809545,   0.02257574,  -0.00357443,  -0.00727362,   0.01866495,  -0.01850644,  -0.50307512],
+               [  0.58460032,  -0.02903433,   0.01018458,   0.00163422,  -0.01850644,   0.05185993,   0.47629102],
+               [ 22.53934157,  -0.70596416,   0.09167906,   0.08249111,  -0.50307512,   0.47629102, 340.95796717]])
 
         NB: Covariance matrices (components) are not subject to bootstrapping
-         for performance reasons. This implies computing `self.obs_fisher_matrix`
+         for performance reasons: this implies computing `self.obs_fisher_matrix`
          `self._nb_resamples` times. However, this can easily be turned on by
          uncommenting the elements `'cov'` and `'stt'` of the list-attribute
-         `self.to_save`.
+         `self.to_save`. However, doing so has side effects on self.summary()
+         since tables related to covmats and t-tests are nonsensically
+         concatenated.
         """
         self._set_hat_env(**kws)
-        _key_ = '_{}-HAT'.format(self.model_id)  
-        if _key_ not in self._tempo:
-            self._szer._may_do_and_dump(
-                _key_,
-                lambda:self._hat_run(**kws),
-                self._tempo
-            )
+        thts = self._hat_run(cid=self.model_id, **kws)
         self._thts_collector(
-            key='hat', thts=self._tempo[_key_]
+            key='hat', thts=thts
         )
-        return self._tempo[_key_]
+        return thts
+    @Cache._method
     def _hat_run(self, **kws):
         thts = copy.deepcopy(self._thts_tmpl)
         if self.verbose:
-            print(u'[HAT~proc]')
+            print(u'[HAT~proc]', end="\n" if self.opverbose else "\r")
         self._run()
         self._save_i_results(thts)
         return thts
@@ -2436,9 +2706,10 @@ class Metrician(Sampler):
         ...     y_name    = 'CRIME',
         ...     x_names   = ['INC', 'HOVAL'],
         ...     id_name   = 'POLYID',
+        ...     verbose   = False,
+        ...     opverbose = False,
         ... )
         >>> run_kwargs = {
-        ...     'verbose'  : False,
         ...     'ER_ks'    : [],
         ...     'AR_ks'    : [],
         ...     'MA_ks'    : [],
@@ -2448,7 +2719,7 @@ class Metrician(Sampler):
         array([[ 68.63591892],
                [ -1.59876117],
                [ -0.27383054],
-               [130.64181237]])
+               [122.47669909]])
 
         Let's see what are the "hat" results for comparison purposes
         >>> ht_results = o.hat_run(**run_kwargs)
@@ -2456,7 +2727,7 @@ class Metrician(Sampler):
         array([[ 68.6189611 ],
                [ -1.59731083],
                [ -0.27393148],
-               [130.75853773]])
+               [122.75291298]])
         """
         self._set_hat_env(**kws)
         _key_ = '_{}-JK'.format(self.model_id)  
@@ -2479,8 +2750,8 @@ class Metrician(Sampler):
                     self.geoids[i],
                     i+1,
                     self.n+1
-                ), end="\r")
-            self._set_jk_env(**kws)
+                ), end="\n" if self.opverbose else "\r")
+            self._set_jk_i_env(**kws)
             self._run()
             self._save_i_results(thts)
         self._save_results(thts)
@@ -2529,58 +2800,58 @@ class Metrician(Sampler):
         data/columbus.out/er{0}ar{0}ma{0}(10000)[crt][llik][stdconv].png
         < etc...>
 
-        We can now check the parameters related results
+        We can now check results related to parameters
         >>> bt_results['par']['std']
-        array([[ 4.53918732],
-               [ 0.32716949],
-               [ 0.10166229],
-               [29.58291632]])
+        array([[ 4.53939228],
+               [ 0.32716959],
+               [ 0.10166388],
+               [27.77199447]])
         >>> bt_results['par']['mean']
-        array([[ 68.64873766],
-               [ -1.60016822],
-               [ -0.27413558],
-               [121.07273943]])
+        array([[ 68.64830927],
+               [ -1.60017103],
+               [ -0.27412991],
+               [113.65767514]])
 
-        As well as those related to model-selection crteria
+        As well as those related to model-selection criteria
         >>> bt_results['crt']['std']
         array([[ 6.0350291 ],
-               [13.97593616],
-               [13.97593616],
-               [13.97593616],
-               [ 0.28522319],
-               [ 0.0869042 ],
-               [ 0.0869042 ],
-               [ 0.0169616 ],
-               [ 0.2566856 ],
-               [ 0.01716561],
-               [ 0.2590324 ],
-               [ 2.83002401],
-               [ 0.28241245],
-               [ 2.33592783],
-               [ 0.27327164]])
+               [12.07005819],
+               [12.07005819],
+               [12.07005819],
+               [ 0.24632772],
+               [ 0.08459525],
+               [ 0.08459525],
+               [ 0.01696112],
+               [ 0.256684  ],
+               [ 0.01696112],
+               [ 0.256684  ],
+               [ 2.82947687],
+               [ 0.28237586],
+               [ 2.33566169],
+               [ 0.27324022]])
         >>> bt_results['crt']['mean']
         array([[-184.75829442],
-               [ 387.18638126],
-               [ 390.7085802 ],
-               [ 385.03311931],
-               [   5.71308888],
-               [   0.55807297],
-               [   0.55807297],
-               [   0.96413927],
-               [   0.27281475],
-               [   0.96407787],
-               [   0.27402976],
-               [   2.20559647],
-               [   0.48927259],
-               [   1.94062635],
-               [   0.51915986]])
+               [ 377.66985078],
+               [ 381.19204973],
+               [ 375.51658884],
+               [   5.51887397],
+               [   0.57746949],
+               [   0.57746949],
+               [   0.96413782],
+               [   0.27278186],
+               [   0.96413782],
+               [   0.27278186],
+               [   2.20490559],
+               [   0.48933157],
+               [   1.94012218],
+               [   0.51922623]])
 
-        NB : the forthcoming Presenter class has methods which displays results
+        NB : the child class Presenter has methods which displays results
         in a more intelligible fashion.
         """
         self._nb_resamples = kws.pop('nbsamples', self._nb_resamples)
         self._set_hat_env(**kws)
-        _key_ = '_{}-BT({})'.format(self.model_id, self._nb_resamples)   
+        _key_ = '_{}-BT({})'.format(self.model_id, self._nb_resamples)
         if _key_ not in self._tempo:
             self._szer._may_do_and_dump(
                 _key_,
@@ -2588,7 +2859,7 @@ class Metrician(Sampler):
                 self._tempo
             )
 
-        # -- Plot convergences
+        # -- Convergence plots
         bt_ = self._tempo[_key_]
         self._thts_collector(key='bt', thts=bt_)
         if kws.get('plot_conv', True):
@@ -2599,38 +2870,41 @@ class Metrician(Sampler):
                 htd = ht_[key]
                 self.conv_charter(key, btd, jkd, htd, m='mean')
                 self.conv_charter(key, btd, jkd, m='std')
-
         return bt_
         
     def _bt_run(self, **kws):
+        self.RiSGi0    = copy.copy(self.RiSGi)
+        self.ysrihat0  = copy.copy(self.xribetas)
+        self.usri0     = copy.copy(self.usri)
+        self.levscale0 = copy.copy(self.levscale)
         thts = copy.deepcopy(self._thts_tmpl)
         s    = 0
         nbs  = self._nb_resamples
+        nnd  = not self.opverbose
         while s<nbs:
             self._bt_s = s
             if self.verbose:
                 if s%10 == 0:
                     print(
                         u'[BT~proc] resampling/seed '
-                        u'n° {} over {}({})'.format(
-                            s, self._nb_resamples, nbs
+                        u'n° {} over {}({})[{:.3f}%]'.format(
+                            s, nbs, nbs - self._nb_resamples,
+                            100.*s/nbs
                         ),
-                        end="\r"*(not self.opverbose)
+                        end="\n" if self.opverbose else "\r"
                     )
-            self._set_bt_env(**kws)
-            if not self._maximized_conc_llik_object.success\
-               and self.p>0:
-                nbs += 1
-            elif self._z_score_controler_say_no(thts['par']):
-                nbs += 1                
+            self._set_bt_s_env(**kws)
+            self._run()
+            if self._maximized_conc_llik_object.success is None:
+                nbs += 1        
             else:
                 self._save_i_results(thts)            
             s += 1
-        self._save_results(thts)            
+        self._save_results(thts)         
         return thts
 
     _rname_stdzer = lambda s,n:(' '.join(n.split()), n.replace(' ',r'\ '))
-    def conv_charter(self, key, btd, jkd, htd=None, m='mean', save_fig=True):
+    def conv_charter(self, key, btd, jkd, htd=None, m='mean', **kws):
         """ 
         """
         bt_  = btd['%s_conv'%m]
@@ -2662,9 +2936,9 @@ class Metrician(Sampler):
             
             self._GaussianMLARIMA__set_legend()
             
-            if save_fig:
+            if kws.get('save_fig', True):
                 self._GaussianMLARIMA__fig_saver(key, rname, '%s_conv'%m)
-            else:
+            if kws.get('show_fig', False):
                 plt.show()
             plt.clf()
         plt.close()
@@ -2714,15 +2988,15 @@ class PIntervaler(Metrician):
     }
 
     def __figs_plter(self, key, val, larg):
-        kwargs = self.__figs_kwarger[key](
+        kws = self.__figs_kwarger[key](
             val, larg
         )
-        getattr(plt, kwargs.pop('meth'))(
-            **kwargs
+        getattr(plt, kws.pop('meth'))(
+            **kws
         )        
 
-    def __init__(self, **kwargs):
-        super(PIntervaler, self).__init__(**kwargs)
+    def __init__(self, **kws):
+        super(PIntervaler, self).__init__(**kws)
 
     @staticmethod
     def Z_computer(bt_, ht_, nb_resamples):
@@ -2840,29 +3114,29 @@ class PIntervaler(Metrician):
         array([[ 68.6189611 ],
                [ -1.59731083],
                [ -0.27393148],
-               [130.75853773]])
+               [122.75291298]])
         >>> parameters_related_results['boot_mean']
-        array([[ 68.64873766],
-               [ -1.60016822],
-               [ -0.27413558],
-               [121.07273943]])
+        array([[ 68.64830927],
+               [ -1.60017103],
+               [ -0.27412991],
+               [113.65767514]])
         >>> parameters_related_results['BCa_lo']
-        array([[59.97660869],
-               [-2.35734682],
+        array([[59.97711055],
+               [-2.35708693],
                [-0.4471698 ],
-               [81.4898608 ]])
+               [76.50712145]])
         >>> parameters_related_results['BCa_up']
-        array([[ 77.92756627],
-               [ -1.04499783],
+        array([[ 77.92911911],
+               [ -1.04484449],
                [ -0.02301598],
-               [198.21210783]])
+               [186.09021696]])
 
         Let's check for distributions' symmetry
         >>> parameters_related_results['Z']
-        array([[0.00451195],
-               [0.01428827],
+        array([[0.00476261],
+               [0.01453896],
                [0.01253347],
-               [0.4007557 ]])
+               [0.40102733]])
 
         The last component of the above vector is related to
         the variance of the residuals. As expected, it is far
@@ -2883,30 +3157,30 @@ class PIntervaler(Metrician):
         type I error. Remember that in a normal-approximation
         case, those are 2.5% and 97.5%.
         >>> parameters_related_results['A1']
-        array([[0.02979344],
-               [0.01037932],
+        array([[0.02982623],
+               [0.0103961 ],
                [0.04611224],
-               [0.07488572]])
+               [0.07497771]])
         >>> parameters_related_results['A2']
-        array([[0.97941001],
-               [0.95611356],
+        array([[0.97943582],
+               [0.95615396],
                [0.99017499],
-               [0.98975397]])
+               [0.98976623]])
 
         Let's see what are the BCa-underlying standard deviations that
         would prevail in the symmetrical-distribution case.
         >>> parameters_related_results['std']
-        array([[ 4.57941006],
-               [ 0.33478906],
+        array([[ 4.57967817],
+               [ 0.33476188],
                [ 0.10820449],
-               [29.77663058]])
+               [27.95538499]])
 
         while that of the bootstrap-sample are
         >>> parameters_related_results['boot_std']
-        array([[ 4.53918732],
-               [ 0.32716949],
-               [ 0.10166229],
-               [29.58291632]])
+        array([[ 4.53939228],
+               [ 0.32716959],
+               [ 0.10166388],
+               [27.77199447]])
         """
 
         plt_h = run_kws.pop('plot_hist', True)
@@ -2964,8 +3238,8 @@ class PIntervaler(Metrician):
             )/z
         return ht        
 
-    def hist_charter(self, key, btd, htd, save_fig=True, **kws):
-        """ 
+    def hist_charter(self, key, btd, htd, **kws):
+        """ Charts bootstrap distribution.
         """
         bt_  = btd['stack']
         nvar = bt_.shape[0]
@@ -3004,9 +3278,9 @@ class PIntervaler(Metrician):
 
             self._GaussianMLARIMA__set_legend()
             # -- save or show
-            if save_fig:
+            if kws.get('save_fig', True):
                 self._GaussianMLARIMA__fig_saver(key, rname, 'dist')
-            else:
+            if kws.get('show_fig', False):
                 plt.show()
             plt.clf()
         plt.close()           
@@ -3016,27 +3290,77 @@ class PIntervaler(Metrician):
 ##    ╠═╝├┬┘├┤ └─┐├┤ │││ │ ├┤ ├┬┘
 ##    ╩  ┴└─└─┘└─┘└─┘┘└┘ ┴ └─┘┴└─
 class Presenter(PIntervaler):
-    def __init__(self, **kwargs):
-        super(Presenter, self).__init__(**kwargs)
+    def __init__(self, **kws):
+        super(Presenter, self).__init__(**kws)
 
     @staticmethod
-    def _dim_renamer(o, **kws):
-        if isinstance(o, pd.core.frame.DataFrame):
-            o.index.name   = kws.get('x')
-            o.columns.name = r'\\\\ {y} ////'.format(**kws)
+    def _dim_renamer(df, **kws):
+        r""" Renames dimensions of dataframe-like objects
+
+        Example
+        -------
+        >>> np.random.seed(0)
+        >>> df = pd.DataFrame(np.random.randint(0, 100, size=(2, 4)))
+        >>> df
+            0   1   2   3
+        0  44  47  64  67
+        1  67   9  83  21
+
+        >>> slib = Presenter
+        >>> slib._dim_renamer(
+        ...     df,
+        ...     x='VDIM',
+        ...     y='HDIM',
+        ... )
+        HDIM   0   1   2   3
+        VDIM                
+        0     44  47  64  67
+        1     67   9  83  21
+
+        >>> slib._dim_renamer(
+        ...     df,
+        ...     y='HDIM',
+        ... )
+        HDIM   0   1   2   3
+        0     44  47  64  67
+        1     67   9  83  21
+        """
+        if isinstance(df, pd.core.frame.DataFrame):
+            df.index.name   = kws.get('x')
+            df.columns.name = kws.get('y')
         else:
             raise NotImplemented
-        return o
+        return df
 
     @staticmethod
-    def __labeler(ylab, arr, rnames, cnames=None):
+    def _labeler(ylab, arr, rnames, cnames=None):
+        r""" Renames dimensions and coordinates of dataframe-like objects
+
+        Example
+        -------
+        >>> np.random.seed(0)
+        >>> arr = np.random.randint(0, 100, size=(2, 4))
+        >>> arr
+        array([[44, 47, 64, 67],
+               [67,  9, 83, 21]])
+
+        >>> slib = Presenter
+        >>> slib._labeler(
+        ...     'TABLE-NAME', arr,
+        ...     rnames = ['r1', 'r2'],
+        ...     cnames = ['c1', 'c2', 'c3', 'c4']
+        ... )
+        \\\\ TABLE-NAME ////  c1  c2  c3  c4
+        r1                    44  47  64  67
+        r2                    67   9  83  21
+        """
         return Presenter._dim_renamer(
-            o = pd.DataFrame(
+            pd.DataFrame(
                 arr,
                 index   = rnames,
                 columns = cnames or rnames
             ),
-            y = ylab,
+            y = r'\\\\ {} ////'.format(ylab),
         )
 
     @Cache._property
@@ -3051,6 +3375,8 @@ class Presenter(PIntervaler):
         ...     y_name    = 'CRIME',
         ...     x_names   = ['INC', 'HOVAL'],
         ...     id_name   = 'POLYID',
+        ...     verbose   = False,
+        ...     opverbose = False,
         ... )
         >>> hat_results = o.hat_run(AR_ks=[1], MA_ks=[4, 6])
 
@@ -3059,13 +3385,13 @@ class Presenter(PIntervaler):
         ... )
         >>> labeled_pars
         \\\\ HAT ////  ER{0}AR{1}MA{4,6}
-        \beta_0                56.511750
-        \beta_{INC}            -1.627650
-        \beta_{HOVAL}          -0.166925
-        \rho_{1}                0.207538
-        \lambda_{4}             0.498550
-        \lambda_{6}            -0.254736
-        \sigma^2               85.065832
+        \beta_0                56.512740
+        \beta_{INC}            -1.627661
+        \beta_{HOVAL}          -0.166921
+        \rho_{1}                0.207512
+        \lambda_{4}             0.498545
+        \lambda_{6}            -0.254709
+        \sigma^2_{ML}          78.122191
 
         >>> labeled_criteria = o.labelers['crt'](
         ...     'HAT', hat_results
@@ -3073,37 +3399,37 @@ class Presenter(PIntervaler):
         >>> labeled_criteria
         \\\\ HAT ////         ER{0}AR{1}MA{4,6}
         llik                        -175.498634
-        HQC                          367.476524
-        BIC                          374.520922
-        AIC                          363.170000
-        AICg                           5.266903
-        pr^2                           0.544722
-        pr^2 (pred)                    0.577247
+        HQC                          367.303791
+        BIC                          374.348189
+        AIC                          362.997267
+        AICg                           5.263378
+        pr^2                           0.544721
+        pr^2 (pred)                    0.577244
         Sh's W                         0.968770
-        Sh's Pr(>|W|)                  0.216241
-        Sh's W (pred)                  0.945629
-        Sh's Pr(>|W|) (pred)           0.024650
-        BP's B                         3.225424
-        BP's Pr(>|B|)                  0.199346
-        KB's K                         1.892852
-        KB's Pr(>|K|)                  0.388126
+        Sh's Pr(>|W|)                  0.216237
+        Sh's W (pred)                  0.945628
+        Sh's Pr(>|W|) (pred)           0.024649
+        BP's B                         3.225397
+        BP's Pr(>|B|)                  0.199349
+        KB's K                         1.892857
+        KB's Pr(>|K|)                  0.388125
         """
         return {
-            'par':lambda ylab, thts, key='stack':self.__labeler(
+            'par':lambda ylab, thts, key='stack':self._labeler(
                 ylab, thts['par'].get(key, thts['par']['stack']),
                 self.par_names,
                 [self.model_id]
             ),
-            'crt':lambda ylab, thts, key='stack':self.__labeler(
+            'crt':lambda ylab, thts, key='stack':self._labeler(
                 ylab, thts['crt'].get(key, thts['crt']['stack']),
                 map(lambda (n,k):n, self._crt_names),
                 [self.model_id]
             ),
-            'cov':lambda ylab, thts, key='stack':self.__labeler(
+            'cov':lambda ylab, thts, key='stack':self._labeler(
                 ylab, thts['cov'].get(key, thts['cov']['stack']),
                 self.par_names
             ),
-            'stt':lambda ylab, thts, key='stack':self.__labeler(
+            'stt':lambda ylab, thts, key='stack':self._labeler(
                 ylab, thts['stt'].get(key, thts['stt']['stack']),
                 self.par_names, self._stt_names
             )
@@ -3119,6 +3445,8 @@ class Presenter(PIntervaler):
         ...     y_name    = 'CRIME',
         ...     x_names   = ['INC', 'HOVAL'],
         ...     id_name   = 'POLYID',
+        ...     verbose   = False,
+        ...     opverbose = False,
         ... )
         >>> _ = o.hat_run()
         >>> _ = o.hat_run(AR_ks=[1])
@@ -3126,30 +3454,30 @@ class Presenter(PIntervaler):
         >>> o.summary(moment='mean')
         ================================= PARS
         \\\\ HAT ////  ER{0}AR{0}MA{0}  ER{0}AR{1}MA{0}  ER{0}AR{1}MA{4,6}
-        \beta_0              68.618961        49.375915          56.511750
-        \beta_{HOVAL}        -0.273931        -0.270036          -0.166925
-        \beta_{INC}          -1.597311        -1.159710          -1.627650
-        \lambda_{4}                NaN              NaN           0.498550
-        \lambda_{6}                NaN              NaN          -0.254736
-        \rho_{1}                   NaN         0.320125           0.207538
-        \sigma^2            130.758538       102.144724          85.065832
+        \beta_0              68.618961        49.374308          56.512740
+        \beta_{HOVAL}        -0.273931        -0.270035          -0.166921
+        \beta_{INC}          -1.597311        -1.159673          -1.627661
+        \lambda_{4}                NaN              NaN           0.498545
+        \lambda_{6}                NaN              NaN          -0.254709
+        \rho_{1}                   NaN         0.320152           0.207512
+        \sigma^2_{ML}       122.752913        93.805430          78.122191
         ================================= CRTS
         \\\\ HAT ////         ER{0}AR{0}MA{0}  ER{0}AR{1}MA{0}  ER{0}AR{1}MA{4,6}
         llik                      -187.377239      -182.193752        -175.498634
-        HQC                        383.003506       375.431252         367.476524
-        BIC                        386.525705       380.127517         374.520922
-        AIC                        380.850244       372.560236         363.170000
-        AICg                         5.627724         5.458540           5.266903
-        pr^2                         0.552404         0.548625           0.544722
-        pr^2 (pred)                  0.552404         0.588924           0.577247
-        Sh's W                       0.977076         0.966406           0.968770
-        Sh's Pr(>|W|)                0.449724         0.173518           0.216241
-        Sh's W (pred)                0.977076         0.978609           0.945629
-        Sh's Pr(>|W|) (pred)         0.449724         0.508420           0.024650
-        BP's B                       7.900442        15.168191           3.225424
-        BP's Pr(>|B|)                0.019250         0.000508           0.199346
-        KB's K                       5.694088         8.367892           1.892852
-        KB's Pr(>|K|)                0.058016         0.015238           0.388126
+        HQC                        382.907740       375.258520         367.303791
+        BIC                        386.429939       379.954785         374.348189
+        AIC                        380.754478       372.387504         362.997267
+        AICg                         5.625770         5.455015           5.263378
+        pr^2                         0.552404         0.548625           0.544721
+        pr^2 (pred)                  0.552404         0.588923           0.577244
+        Sh's W                       0.977076         0.966407           0.968770
+        Sh's Pr(>|W|)                0.449724         0.173524           0.216237
+        Sh's W (pred)                0.977076         0.978610           0.945628
+        Sh's Pr(>|W|) (pred)         0.449724         0.508454           0.024649
+        BP's B                       7.900442        15.168577           3.225397
+        BP's Pr(>|B|)                0.019250         0.000508           0.199349
+        KB's K                       5.694088         8.368048           1.892857
+        KB's Pr(>|K|)                0.058016         0.015237           0.388125
         """
         for obj in self.to_save:
             print(33*"=", '%sS'%obj.upper())
@@ -3171,7 +3499,7 @@ class Presenter(PIntervaler):
 
                 print(pd.concat(labeled_objs, axis=1))
 
-if __name__ == '__main__':
+if name_eq_main:
     npopts(8, True, 5e4)
     pdopts(5e4)
     import doctest
