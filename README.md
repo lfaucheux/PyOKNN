@@ -155,16 +155,44 @@ A little summary can be helpfull.
     KB's K                       5.694088             2.723948             9.514668             6.721746
     KB's Pr(>|K|)                0.058016             0.256155             0.008588             0.034705 
 
-Given that the specification `ER{0}AR{0}MA{1,2,4}` has the minimum BIC, let's pursue with it and bootstrap-estimate all parameters' bias-corrected and accelerated (BCa) intervals. 
+Given that the specification `ER{0}AR{0}MA{1,2,4}` has the minimum BIC, let's pursue with it and check its parameters-covariance matrix and statistical table. Know that we can figure out what the ongoing model is, doing
 
-    >>> o.opverbose = False     # Printing minimizer's messages may slow down iterations
-    >>> run_kwargs = {
-    ...     'plot_hist': True,  # Bootstrap distributions
-    ...     'plot_conv': True,  # Convergence plots
-    ...     'MA_ks'    : [1, 2, 4] ,
-    ...     'nbsamples': 10000, # Number of resamplings
-    ... }
-    >>> o.PIs_computer(**run_kwargs)
+    >>> o.model_id
+    ER{1,2,4}AR{0}MA{0}
+
+which is not model we want. This one is simply the last that we had work with. We thus have to explicitly request `ER{0}AR{0}MA{1,2,4}`'s parameters-covariance matrix and statistical table, doing,
+
+    >>> o.covmat_of(MA_ks=[1, 2, 4])
+    \\\\ COV ////    \beta_0  \beta_{INC}  \beta_{HOVAL}  \lambda_{1}  \lambda_{2}  \lambda_{4}  \sigma^2_{ML}
+    \beta_0        19.139222    -0.784264      -0.025163    -0.061544    -0.028639     0.073201      -1.621429
+    \beta_{INC}    -0.784264     0.109572      -0.019676     0.008862     0.017765    -0.014063       0.715907
+    \beta_{HOVAL}  -0.025163    -0.019676       0.007814    -0.001673    -0.006111     0.003102      -0.239979
+    \lambda_{1}    -0.061544     0.008862      -0.001673     0.010061    -0.000185    -0.001523       0.346635
+    \lambda_{2}    -0.028639     0.017765      -0.006111    -0.000185     0.014815    -0.001668       0.576185
+    \lambda_{4}     0.073201    -0.014063       0.003102    -0.001523    -0.001668     0.008075       0.092086
+    \sigma^2_{ML}  -1.621429     0.715907      -0.239979     0.346635     0.576185     0.092086     394.737828
+
+There is henceforth no need to make an argumented call like `o.table_test_of(MA_ks=[1, 2, 4])`, doing
+
+    >>> o.table_test
+    \\\\ STT ////   Estimate  Std. Error  t|z value      Pr(>|t|)      Pr(>|z|)
+    \beta_0        63.418312    4.374840  14.496146  3.702829e-18  1.281465e-47
+    \beta_{INC}    -1.237462    0.331017  -3.738367  5.422541e-04  1.852193e-04
+    \beta_{HOVAL}  -0.290030    0.088398  -3.280974  2.056930e-03  1.034494e-03
+    \lambda_{1}     0.233173    0.100303   2.324690  2.487823e-02  2.008854e-02
+    \lambda_{2}     0.303743    0.121716   2.495501  1.649425e-02  1.257793e-02
+    \lambda_{4}     0.390871    0.089860   4.349759  8.232171e-05  1.362874e-05
+    \sigma^2_{ML}  93.134973   19.868010   4.687685  2.795560e-05  2.763129e-06
+
+
+But one may want not to make any assumptions regarding spatial parameters distribution and bootstrap-estimate all parameters' bias-corrected and accelerated (BCa) intervals. 
+
+    >>> o.opverbose = False       # Printing minimizer's messages may slow down iterations
+    >>> o.PIs_computer(
+    ...     plot_hist = True,     # Bootstrap distributions
+    ...     plot_conv = True,     # Convergence plots
+    ...     MA_ks     = [1, 2, 4]
+    ...     nbsamples = 10000     # Number of resamplings
+    ... )
 
     
-[ Forthcoming ] 
