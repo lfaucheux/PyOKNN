@@ -22,6 +22,7 @@
 # How
 
 ## [Python2.7.+](https://www.python.org/ftp/python/2.7.14/python-2.7.14.msi) requirements
+<details><summary><summary>
 
 - **[matplotlib](https://matplotlib.org/)** *(tested under 1.4.3)*
 - **[numdifftools](https://pypi.python.org/pypi/Numdifftools)**        *(tested under 0.9.20)* 
@@ -29,6 +30,7 @@
 - **[pandas](https://pandas.pydata.org/)**        *(tested under 0.22.0)* 
 - **[scipy](https://www.scipy.org/)**        *(tested under 1.0.0)* 
 - **[pysal](http://pysal.readthedocs.io/en/latest/)**        *(tested under 1.14.3)* 
+</details>
 
 
 
