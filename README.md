@@ -175,15 +175,19 @@ which is not model we want. This one is simply the last that we had work with. W
 There is henceforth no need to make an argumented call like `o.table_test_of(MA_ks=[1, 2, 4])`, doing
 
     >>> o.table_test
-    \\\\ STT ////   Estimate  Std. Error  t|z value      Pr(>|t|)      Pr(>|z|)
-    \beta_0        63.418312    4.374840  14.496146  3.702829e-18  1.281465e-47
-    \beta_{INC}    -1.237462    0.331017  -3.738367  5.422541e-04  1.852193e-04
-    \beta_{HOVAL}  -0.290030    0.088398  -3.280974  2.056930e-03  1.034494e-03
-    \lambda_{1}     0.233173    0.100303   2.324690  2.487823e-02  2.008854e-02
-    \lambda_{2}     0.303743    0.121716   2.495501  1.649425e-02  1.257793e-02
-    \lambda_{4}     0.390871    0.089860   4.349759  8.232171e-05  1.362874e-05
-    \sigma^2_{ML}  93.134973   19.868010   4.687685  2.795560e-05  2.763129e-06
+    \\\\ STT ////   Estimate  Std. Error  t|z value      Pr(>|t|)      Pr(>|z|)  95.0% lo.  95.0% up.
+    \beta_0        63.418312    4.374840  14.496146  3.702829e-18  1.281465e-47  62.193379  64.643245
+    \beta_{INC}    -1.237462    0.331017  -3.738367  5.422541e-04  1.852193e-04  -1.330145  -1.144779
+    \beta_{HOVAL}  -0.290030    0.088398  -3.280974  2.056930e-03  1.034494e-03  -0.314781  -0.265279
+    \lambda_{1}     0.233173    0.100303   2.324690  2.487823e-02  2.008854e-02   0.205089   0.261257
+    \lambda_{2}     0.303743    0.121716   2.495501  1.649425e-02  1.257793e-02   0.269663   0.337823
+    \lambda_{4}     0.390871    0.089860   4.349759  8.232171e-05  1.362874e-05   0.365711   0.416032
+    \sigma^2_{ML}  93.134973   19.868010   4.687685  2.795560e-05  2.763129e-06  87.572032  98.697913
+    
+Also, note that the above table holds for
 
+    >>> o.type_I_err
+    0.05
 
 But one may want not to make any assumptions regarding spatial parameters distribution and favor an empirical approach by bootstrap-estimating all parameters' (bias-corrected and accelerated - BCa) percentile intervals. 
 
@@ -195,11 +199,11 @@ But one may want not to make any assumptions regarding spatial parameters distri
     ...     nbsamples = 10000     # Number of resamplings
     ... )
     
-10000 resamplings later, for the economic parameters we see that using normal-approximation based confidence intervals is anything but "flat wrong", look:
+10000 resamplings later, we see regarding economic parameters that using normal-approximation based confidence intervals is anything but "flat wrong", look:
 
 <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Bbeta0%5D%5Bdist%5D.png?raw=true" width="33%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Bbeta%7BHOVAL%7D%5D%5Bdist%5D.png?raw=true" width="33%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Bbeta%7BINC%7D%5D%5Bdist%5D.png?raw=true" width="33%"/>
 
-which is not true for spatial parameters:
+which is not as true for spatial parameters:
 
 <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Blambda%7B1%7D%5D%5Bdist%5D.png?raw=true" width="33%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Blambda%7B2%7D%5D%5Bdist%5D.png?raw=true" width="33%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Blambda%7B4%7D%5D%5Bdist%5D.png?raw=true" width="33%"/>
 
