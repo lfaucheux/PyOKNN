@@ -172,7 +172,7 @@ which is not model we want. This one is simply the last that we had work with. W
     \lambda_{4}     0.073201    -0.014063       0.003102    -0.001523    -0.001668     0.008075       0.092086
     \sigma^2_{ML}  -1.621429     0.715907      -0.239979     0.346635     0.576185     0.092086     394.737828
 
-There is henceforth no need to make an argumented call like `o.table_test_of(MA_ks=[1, 2, 4])`, doing
+and (there is henceforth no need to make an argumented call like `o.table_test_of(MA_ks=[1, 2, 4])` since `ER{0}AR{0}MA{1,2,4}` is the model set currently thanks to `o.covmat_of(MA_ks=[1, 2, 4])`)
 
     >>> o.table_test
     \\\\ STT ////   Estimate  Std. Error  t|z value      Pr(>|t|)      Pr(>|z|)  95.0% lo.  95.0% up.
