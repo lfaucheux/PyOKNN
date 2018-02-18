@@ -35,12 +35,15 @@ if 1:
     o.u_hull_chart
 
     ## ...
-    print o.summary()
+    print(o.summary())
+
+    ## ...
+    print(o.covmat_of(MA_ks=[1, 2, 4]))
 
 
-if 0:
+if 1:
     ## Let's go for an MA{1,2,4}
-    o.opverbose = False     # Printing minimizer's messages slows down processes.
+    o.opverbose = False       # Printing minimizer's messages slows down processes.
     run_kwargs = {
         'plot_hist': True,  # Bootstrap distributions
         'plot_conv': True,  # Convergence plots
@@ -48,3 +51,5 @@ if 0:
         'nbsamples': 10000, # Number of resampling iterations
     }
     o.PIs_computer(**run_kwargs)
+    print(o.table_test.iloc[:, 7:])
+    print(o.table_test.iloc[:, :7])
