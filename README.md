@@ -22,17 +22,20 @@
 # How
 
 ## [Python2.7.+](https://www.python.org/ftp/python/2.7.14/python-2.7.14.msi) requirements
+
 <details><summary></summary>
+   
 - **[matplotlib](https://matplotlib.org/)** *(tested under 1.4.3)*
 - **[numdifftools](https://pypi.python.org/pypi/Numdifftools)**        *(tested under 0.9.20)* 
 - **[numpy](http://www.numpy.org/)**        *(tested under 1.14.0)* 
 - **[pandas](https://pandas.pydata.org/)**        *(tested under 0.22.0)* 
 - **[scipy](https://www.scipy.org/)**        *(tested under 1.0.0)* 
 - **[pysal](http://pysal.readthedocs.io/en/latest/)**        *(tested under 1.14.3)*
+
 </details>
 
 ## Installation
-<details><summary>`pip install pyoknn`</summary>
+
 We are going to use a package management system to install and manage software packages written in Python, namely [pip](https://en.wikipedia.org/wiki/Pip_(package_manager)). Open a session in your OS shell prompt and type
 
     pip install pyoknn
@@ -42,8 +45,6 @@ Or using a non-python-builtin approach, namely [git](https://git-scm.com/downloa
     git clone git://github.com/lfaucheux/PyOKNN.git
     cd PyOKNN
     python setup.py install
-
-</details>
 
 ## Example usage:
 The example that follows is done via the Python Shell. Let's first import the module `PyOKNN`.
