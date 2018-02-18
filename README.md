@@ -209,4 +209,13 @@ which is not as true for spatial parameters:
 
 One notable diffference is that BCa percentile intervals of <img src="https://latex.codecogs.com/gif.latex?\widehat{\lambda_{2}}" title="\widehat{\lambda_{2}}" /> and <img src="https://latex.codecogs.com/gif.latex?\widehat{\lambda_{4}}" title="\widehat{\lambda_{4}}" /> contain 0 while their non-BCa version do not.
 
-    
+Note that the statistical table, previously called, is now augmented by the bootstrap-results    >>> o.table_test
+    \\\\ STT ////   Estimate  Std. Error  t|z value      Pr(>|t|)      Pr(>|z|)  95.0% CI.lo.  95.0% CI.up.  95.0% PI.lo.  95.0% PI.up.  95.0% BCa.lo.  95.0% BCa.up.
+    \beta_0        63.418312    4.374840  14.496146  3.702829e-18  1.281465e-47     62.193379     64.643245     53.922008     73.107011      53.328684      72.512817
+    \beta_{INC}    -1.237462    0.331017  -3.738367  5.422541e-04  1.852193e-04     -1.330145     -1.144779     -1.846416     -0.632656      -1.825207      -0.610851
+    \beta_{HOVAL}  -0.290030    0.088398  -3.280974  2.056930e-03  1.034494e-03     -0.314781     -0.265279     -0.451431     -0.127206      -0.451658      -0.127696
+    \lambda_{1}     0.233173    0.100303   2.324690  2.487823e-02  2.008854e-02      0.205089      0.261257     -0.043012      0.534407      -0.122474       0.484635
+    \lambda_{2}     0.303743    0.121716   2.495501  1.649425e-02  1.257793e-02      0.269663      0.337823      0.008517      0.616936      -0.089690       0.562511
+    \lambda_{4}     0.390871    0.089860   4.349759  8.232171e-05  1.362874e-05      0.365711      0.416032      0.116317      0.768369      -0.032977       0.652651
+    \sigma^2_{ML}  93.134973   19.868010   4.687685  2.795560e-05  2.763129e-06     87.572032     98.697913     50.668029    139.392307      61.426042     168.070074
+
