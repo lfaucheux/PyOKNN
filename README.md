@@ -209,7 +209,7 @@ which is not as true for spatial parameters:
 
 One notable diffference is that BCa percentile intervals of <img src="https://latex.codecogs.com/gif.latex?\widehat{\lambda_{2}}" title="\widehat{\lambda_{2}}" /> and <img src="https://latex.codecogs.com/gif.latex?\widehat{\lambda_{4}}" title="\widehat{\lambda_{4}}" /> contain 0 while their non-BCa version do not. Moreover, these non-normal based intervals are all the more informative when dealing with unsymmetrical distributions, as that of <img src="https://latex.codecogs.com/gif.latex?\sigma^2_{ML}" title="\sigma^2_{ML}" />
 
-<img align='center' src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Bsigma%5E2%7BML%7D%5D%5Bdist%5D.png?raw=true" width="33%"/>
+<div  align="center"><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Bsigma%5E2%7BML%7D%5D%5Bdist%5D.png?raw=true" width="33%"/></div>
 
 Note that the statistical table, previously called doing `o.table_test`, is now augmented on the right by the bootstrap-results.
 
