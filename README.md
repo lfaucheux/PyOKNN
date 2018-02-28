@@ -161,7 +161,7 @@ Given that the specification `ER{0}AR{0}MA{1,2,4}` has the minimum BIC, let's pu
     >>> o.model_id
     ER{1,2,4}AR{0}MA{0}
 
-which is not the model we want. This one is simply the last that we have worked with. We thus have to explicitly request `ER{0}AR{0}MA{1,2,4}`'s parameters-covariance matrix and statistical table, as follows
+which is simply the last that we have worked with. We thus have to explicitly request `ER{0}AR{0}MA{1,2,4}`'s parameters-covariance matrix and statistical table, as follows
 
     >>> o.covmat_of(MA_ks=[1, 2, 4])
     \\\\ COV ////    \beta_0  \beta_{INC}  \beta_{HOVAL}  \lambda_{1}  \lambda_{2}  \lambda_{4}  \sigma^2_{ML}
