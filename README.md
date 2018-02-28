@@ -24,12 +24,12 @@
 
 ## [Python2.7.+](https://www.python.org/ftp/python/2.7.14/python-2.7.14.msi) requirements
    
-- **[matplotlib](https://matplotlib.org/)** *(tested under 1.4.3)*
-- **[numdifftools](https://pypi.python.org/pypi/Numdifftools)**        *(tested under 0.9.20)* 
-- **[numpy](http://www.numpy.org/)**        *(tested under 1.14.0)* 
-- **[pandas](https://pandas.pydata.org/)**        *(tested under 0.22.0)* 
-- **[scipy](https://www.scipy.org/)**        *(tested under 1.0.0)* 
-- **[pysal](http://pysal.readthedocs.io/en/latest/)**        *(tested under 1.14.3)*
+- **[matplotlib](https://matplotlib.org/)** *(>=1.4.3 preferably)*
+- **[numdifftools](https://pypi.python.org/pypi/Numdifftools)**        *(>=0.9.20 preferably)* 
+- **[numpy](http://www.numpy.org/)**        *(>=1.14.0 preferably)* 
+- **[pandas](https://pandas.pydata.org/)**        *(>=0.22.0 preferably)* 
+- **[scipy](https://www.scipy.org/)**        *(>=1.0.0 preferably)* 
+- **[pysal](http://pysal.readthedocs.io/en/latest/)**        *(>=1.14.3 preferably)*
 
 ## Installation
 
