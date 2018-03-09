@@ -212,7 +212,7 @@ One notable diffference is that BCa percentile intervals of <img src="https://la
 
 <div  align="center"><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B1,2,4%7D(10000)%5Bpar%5D%5Bsigma%5E2%7BML%7D%5D%5Bdist%5D.png?raw=true" width="33%"/></div>
 
-Note that the statistical table, previously called, typing `o.table_test`, is now augmented on the right by the bootstrap-results.
+Note that the statistical table, previously called typing `o.table_test`, is now augmented on the right by the bootstrap-results.
 
     >>> o.table_test
     \\\\ STT ////   Estimate  Std. Error  t|z value      Pr(>|t|)      Pr(>|z|)  95.0% CI.lo.  95.0% CI.up.  95.0% PI.lo.  95.0% PI.up.  95.0% BCa.lo.  95.0% BCa.up.
