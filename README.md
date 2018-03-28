@@ -1,7 +1,7 @@
 # [PyOKNN](https://github.com/lfaucheux/oknn) - A spatial lag operator proposal implemented in Python: *only the k-nearest neighbor* (oknn).
 
 # Why
-<details><summary> <i>By opposition to the time-series case, specifying the spatial lag operator involves a lot of arbitrariness. Hence this proposal, which yields a lag operator usable as primarily observed without modiﬁcations.<b>(click to expand)</b></i></summary>
+<details><summary> <i>By opposition to the time-series case, specifying the spatial lag operator involves a lot of arbitrariness. Hence this proposal, which yields a lag operator usable as primarily observed without modiﬁcations. <b>(click to expand)</b></i></summary>
 <p>
    
    [Fingleton (2009)](http://onlinelibrary.wiley.com/doi/10.1111/j.1538-4632.2009.00765.x/abstract) and [Corrado and Fingleton (2012)](http://onlinelibrary.wiley.com/doi/10.1111/j.1467-9787.2011.00726.x/abstract) remind the analogies between temporal and spatial processes, at least when considering their lag operators. In the spatial econometric (SE) case, the lag operator is always explicitly involved *via* the use of a <img src="https://latex.codecogs.com/gif.latex?n&space;\times&space;n" title="n \times n" /> matrix <img src="https://latex.codecogs.com/svg.latex?\boldsymbol{\mathrm{W}}" title="\boldsymbol{\mathrm{W}}" />, where <img src="https://latex.codecogs.com/gif.latex?n" title="n" /> is the number of interacting positions. The chosen space can be geographic, economic, social or of any other type. In the temporal case, which is seen as a space like no other given its inescapable anisotropic nature, the lag operator is in practice never explicitly considered. Any variable to lag, say, a <img src="https://latex.codecogs.com/gif.latex?n&space;\times&space;1" title="n \times 1" /> vector <img src="https://latex.codecogs.com/gif.latex?\boldsymbol{\mathrm{y}}" title="\boldsymbol{\mathrm{y}}" />, is formed over components that are prealably sorted according to their position on the timeline. This allows the lag-procedure to simply consist of offsetting down/up these components by a lag-determined number of rows, say, one row. In matrix terms, this offsetting procedure would be entirely equivalent to pre-multiplying an unsorted version of <img src="https://latex.codecogs.com/gif.latex?\boldsymbol{\mathrm{y}}" title="\boldsymbol{\mathrm{y}}" /> by a boolean <img src="https://latex.codecogs.com/gif.latex?n&space;\times&space;n" title="n \times n" /> matrix <img src="https://latex.codecogs.com/gif.latex?\boldsymbol{\mathrm{H}}" title="\boldsymbol{\mathrm{H}}" /> with <img src="https://latex.codecogs.com/gif.latex?1" title="1" />s indicating the immediate and unilateral proximity between temporal positions.
@@ -74,8 +74,8 @@ and
 
 <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="50%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5BHULLS%5D.png?raw=true" width="50%"/>
 
-<details><summary><i>NB</i>.<b>(click to expand)</b></summary>
-NB: hull charts should be treated with great caution since before talking about "long-distance trend" and/or "space-dependent variance", we should make sure that residuals are somehow sorted geographically. However, as shown in the map below, saying that it is totally uninformative appears abusive.
+<details><summary><i>N.B.</i>. <b>(click to expand)</b></summary>
+Hull charts should be treated with great caution since before talking about "long-distance trend" and/or "space-dependent variance", we should make sure that residuals are somehow sorted geographically. However, as shown in the map below, saying that it is totally uninformative appears abusive.
 
 <p align="center">
 <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/data/COLUMBUS/columbus.png?raw=true" width="60%"/><img>
@@ -122,7 +122,7 @@ Thinking of CRIME variable as cointegrated through space with INC and HOVAL, let
 
 <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B1,2,4%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="50%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B1,2,4%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5BHULLS%5D.png?raw=true" width="50%"/>
 
-A little summary can be helpful.
+A little summary is always useful.
 
     >>> o.summary()
     ================================= PARS
@@ -158,12 +158,12 @@ A little summary can be helpful.
     KB's K                       5.694088             2.723948             9.514668             6.721746
     KB's Pr(>|K|)                0.058016             0.256155             0.008588             0.034705 
 
-Given that the specification `ER{0}AR{0}MA{1,2,4}` has the minimum BIC, let's pursue with it and check its parameters-covariance matrix and statistical table. Keep in mind that we can figure out what the ongoing model is, typing
+Given that the specification `ER{0}AR{0}MA{1,2,4}` has the minimum BIC, let's pursue with it and check its parameters-covariance matrix and statistical table. Keep in mind that the returned statistics and results are always those of the last model we worked with. We can figure out what this last model is -- i.e. the ongoing model --, typing
 
     >>> o.model_id
     ER{1,2,4}AR{0}MA{0}
 
-which is simply the last that we have worked with. We thus have to explicitly request `ER{0}AR{0}MA{1,2,4}`'s parameters-covariance matrix and statistical table, as follows
+Since we want to continue with the specification `ER{0}AR{0}MA{1,2,4}`, we thus have to explicitly set it as "ongoing". This can be done, say, while requesting the parameters-covariance matrix and statistical table, as follows
 
     >>> o.covmat_of(MA_ks=[1, 2, 4])
     \\\\ COV ////    \beta_0  \beta_{INC}  \beta_{HOVAL}  \lambda_{1}  \lambda_{2}  \lambda_{4}  \sigma^2_{ML}
