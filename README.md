@@ -74,11 +74,13 @@ and
 
 <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5B(P)ACF%5D.png?raw=true" width="50%"/><img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/examples/ER%7B0%7DAR%7B0%7DMA%7B0%7D%5BRESID%5D%5BHULLS%5D.png?raw=true" width="50%"/>
 
+<details><summary><i>NB</i>.<b>(click to expand)</b></summary>
 NB: hull charts should be treated with great caution since before talking about "long-distance trend" and/or "space-dependent variance", we should make sure that residuals are somehow sorted geographically. However, as shown in the map below, saying that it is totally uninformative appears abusive.
 
 <p align="center">
 <img src="https://github.com/lfaucheux/PyOKNN/blob/master/PyOKNN/data/COLUMBUS/columbus.png?raw=true" width="60%"/><img>
 </p>
+</details>
 
 Be it in the ACF (upper dial) or in the PACF, we clearly have significant dependences at work through the lags 1, 2 and 4. Let's first think of it as global (thus considering the PACF) and go for an AR{1,2,4}.
 
