@@ -187,7 +187,7 @@ and
     \lambda_{4}     0.390871    0.089860   4.349759  8.232171e-05  1.362874e-05   0.365711   0.416032
     \sigma^2_{ML}  93.134973   19.868010   4.687685  2.795560e-05  2.763129e-06  87.572032  98.697913
     
-Also, note that the above table holds for
+Incidentally, note that the above table holds for
 
     >>> o.type_I_err
     0.05
