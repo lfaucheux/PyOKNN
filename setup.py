@@ -4,7 +4,7 @@ from setuptools import setup
 import pathlib as pa
 import codecs as cd
 
-package_version = '0.1.65'
+package_version = '0.1.66'
 package_name    = 'PyOKNN'
 
 with pa.Path('requirements.txt').open() as requirements:
