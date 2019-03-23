@@ -4,7 +4,7 @@ from setuptools import setup
 import pathlib as pa
 import codecs as cd
 
-package_version = '0.1.66'
+package_version = '0.1.66b'
 package_name    = 'PyOKNN'
 
 with pa.Path('requirements.txt').open() as requirements:
@@ -29,7 +29,7 @@ setup(
         ]
     },
     description =(
-        "A spatial lag operator proposal implemented in Python21: "
+        "A spatial lag operator proposal implemented in Python27: "
         "only the k-nearest neighbor (oknn), %s."%package_name
     ),
     long_description              = readme,
