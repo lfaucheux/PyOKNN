@@ -24,7 +24,7 @@
 
 ## [Python2.7.+](https://www.python.org/ftp/python/2.7.14/python-2.7.14.msi) requirements
    
-- **[matplotlib](https://matplotlib.org/)** *(>=1.4.3 preferably)*
+- **[matplotlib](https://matplotlib.org/)** *(==1.4.3 preferably)*
 - **[numdifftools](https://pypi.python.org/pypi/Numdifftools)**        *(>=0.9.20 preferably)* 
 - **[numpy](http://www.numpy.org/)**        *(>=1.14.0 preferably)* 
 - **[pandas](https://pandas.pydata.org/)**        *(>=0.22.0 preferably)* 

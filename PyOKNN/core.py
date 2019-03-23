@@ -6,8 +6,6 @@ __authors__ = [
     "laurent.faucheux@hotmail.fr",
 ]
 
-__version__ = '0.1.63'
-
 __all__     = [
     '__authors__',
     '__version__',
@@ -131,12 +129,10 @@ class UniHasher(object):
             hh += UniHasher.hash_(a)
         return _hash_(hh)
 
-
 #*****************************************************************************#
 ##    ┌─┐┌─┐┌─┐┬ ┬┌─┐
 ##    │  ├─┤│  ├─┤├┤ 
-##    └─┘┴ ┴└─┘┴ ┴└─┘
-    
+##    └─┘┴ ┴└─┘┴ ┴└─┘    
 class Cache(UniHasher):
     def __init__(self):
         self._cache = {}
@@ -398,14 +394,13 @@ class DataGetter(Cache):
 
         Example
         -------
-        >>> dg   = DataGetter()
-        >>> dirs = sorted(dg._map_all('txt')['non-unique-file'])
-        >>> dirs
+        >> all_txt_files = DataGetter()._map_all('txt')
+        >> dirs
         ['data\\tests\\non-unique-file.txt', 'data\\tests\\subfolder\\non-unique-file.txt']
-        >>> dg._from_id_to_index(dirs, id_='subfolder')\
+        >> dg._from_id_to_index(dirs, id_='subfolder')\
         ... == dirs.index('data\\tests\\subfolder\\non-unique-file.txt')
         True
-        >>> dg._from_id_to_index(dirs, id_=r'sts\no')\
+        >> dg._from_id_to_index(dirs, id_=r'sts\no')\
         ... == dirs.index('data\\tests\\non-unique-file.txt')
         True
         """
@@ -474,7 +469,7 @@ class DataGetter(Cache):
         Example
         -------
         >>> dm = DataGetter()
-        >>> sorted(dm._map_all('dbf').items())[0]
+        >>> sorted(dm._dbf_files.items())[0]
         ('columbus', ['data\\COLUMBUS\\columbus.dbf'])
         """
         return self._map_all('dbf')    
@@ -491,16 +486,15 @@ class DataGetter(Cache):
         Example
         -------
         >>> dm = DataGetter()
-        >>> sorted(dm._map_all('shp').items())[0]
+        >>> sorted(dm._shp_files.items())[0]
         ('columbus', ['data\\COLUMBUS\\columbus.shp'])
         """
-        return self._map_all('shp')    
+        return self._map_all('shp')  
     def _get_shp_dir(self, name, **kws):
         return self._get_dir_of(
             name, 'shp', **kws
         )
         
-
 #*****************************************************************************#
 ##    ╔╦╗┌─┐┌┬┐┌─┐╔═╗┌┐  ┬┌─┐┌─┐┌┬┐
 ##     ║║├─┤ │ ├─┤║ ║├┴┐ │├┤ │   │ 
@@ -522,6 +516,8 @@ class DataObject(DataGetter):
         self.x_names  = x_names
         self.id_name  = kws.get('id_name')
         self.srid     = kws.get('srid')
+
+        self._upd_szd = kws.pop('update_szd', False)
 
     @Cache._property
     def save_dir(self):
@@ -556,7 +552,10 @@ class DataObject(DataGetter):
     def _szer(self):
         """ Returns a configured instance of Serializer.
         """
-        return Serializer(sdir=self._szd_dir)
+        return Serializer(
+            sdir   = self._szd_dir,
+            update = self._upd_szd
+        )
 
     @Cache._property
     def dbf_obj(self):
@@ -1009,9 +1008,7 @@ class SpDataObject(DataObject):
     def MA_p_names(self):
         u""" λ-family """
         return map(lambda k:r'\lambda_{%d}'%k, self.MA_ks)
-
-    
-    
+ 
     @Cache._property_tmp
     def p(self):
         """ Number of spatial predictors."""
@@ -2559,6 +2556,26 @@ class Sampler(XACFMaker):
     def Idn_jk(self):
         """ Stores (once for all) and returns identity matrices involved
         during the Jackknife procedure.
+
+        Example
+        -------
+        >>> o = Sampler(
+        ...     data_name  = 'columbus',
+        ...     y_name     = 'CRIME',
+        ...     x_names    = ['INC', 'HOVAL']
+        ... )
+        >>> o.n
+        49
+        >>> o.Idn_jk
+        array([[1., 0., 0., ..., 0., 0., 0.],
+               [0., 1., 0., ..., 0., 0., 0.],
+               [0., 0., 1., ..., 0., 0., 0.],
+               ...,
+               [0., 0., 0., ..., 1., 0., 0.],
+               [0., 0., 0., ..., 0., 1., 0.],
+               [0., 0., 0., ..., 0., 0., 1.]])
+        >>> np.sum(o.Idn_jk)
+        48.0
         """
         return np.identity(self.n-1)
 
@@ -2614,6 +2631,25 @@ class Sampler(XACFMaker):
     def grandi_vector(self):
         """ Stores (once for all) and returns an exponentiated vector of -1,
         as done in Grandi's series.
+
+        Example
+        -------
+        >>> o = Sampler(
+        ...     data_name  = 'columbus',
+        ...     y_name     = 'CRIME',
+        ...     x_names    = ['INC', 'HOVAL']
+        ... )
+        >>> o.grandi_vector[:10, ]
+        array([[ 1.],
+               [-1.],
+               [ 1.],
+               [-1.],
+               [ 1.],
+               [-1.],
+               [ 1.],
+               [-1.],
+               [ 1.],
+               [-1.]])
         """
         return np.power(-self.ones, self._up2n_line[:, None])
 
@@ -2626,12 +2662,27 @@ class Sampler(XACFMaker):
     def get_bt_ixs(self):
         """ Returns the resampled list of individuals' index that are kept
         so as to compute the bootstrap estimates.
+
+        Example
+        -------
+        >>> o = Sampler(
+        ...     data_name  = 'columbus',
+        ...     y_name     = 'CRIME',
+        ...     x_names    = ['INC', 'HOVAL']
+        ... )
+        
+        Let's set the seed so as to make the resampling process reproducible.
+        >>> o._bt_s = 0
+        >>> o.get_bt_ixs()[:10]
+        array([26, 35, 29, 26, 20, 31, 21, 43, 47, 18])
+        >>> o._bt_s = 22
+        >>> o.get_bt_ixs()[:10]
+        array([10, 23, 20, 42,  8, 16, 13, 33, 10, 39])
         """
         np.random.seed(self._bt_s)
         return np.floor(
             np.random.rand(self.n)*self.n
         ).astype(int)
-
 
 #*****************************************************************************#
 ##    ╔╦╗┌─┐┌┬┐┬─┐┬┌─┐┬┌─┐┌┐┌
@@ -2859,11 +2910,15 @@ class Metrician(Sampler):
         for i in self._up2n_line:
             self._jk_i = i
             if self.verbose:
-                print(u'[JK~proc] removed individual {} n° {} over {}'.format(
-                    self.geoids[i],
-                    i+1,
-                    self.n+1
-                ), end="\n" if self.opverbose else "\r")
+                print(
+                    u'[JK~proc] removed individual {} '
+                    u'n° {} over {}'.format(
+                        self.geoids[i],
+                        i+1,
+                        self.n+1
+                    ),
+                    end="\n" if self.opverbose else "\r"
+                )
             self._set_jk_i_env(**kws)
             self._run()
             self._save_i_results(thts)
@@ -2883,7 +2938,7 @@ class Metrician(Sampler):
         ...     verbose   = True,
         ... )
         >>> run_kwargs = {
-        ...     'nbsamples': 10000,
+        ...     'nbsamples': 100,
         ...     'plot_conv': False,
         ...     'ER_ks'    : [],
         ...     'AR_ks'    : [],
@@ -2896,68 +2951,68 @@ class Metrician(Sampler):
         set to  True by default -), running `o.bt_run(**run_kwargs)` leads
         the plotting process to be displayed as it goes. I.e:
         >> bt_results = o.bt_run(**run_kwargs)
-        data/columbus.out/er{0}ar{0}ma{0}(10000)[par][beta0][meanconv].png
-        data/columbus.out/er{0}ar{0}ma{0}(10000)[par][beta{inc}][meanconv].png
-        data/columbus.out/er{0}ar{0}ma{0}(10000)[par][beta{hoval}][meanconv].png
-        data/columbus.out/er{0}ar{0}ma{0}(10000)[par][sigma^2][meanconv].png
-        data/columbus.out/er{0}ar{0}ma{0}(10000)[par][beta0][stdconv].png
-        data/columbus.out/er{0}ar{0}ma{0}(10000)[par][beta{inc}][stdconv].png
+        data/columbus.out/er{0}ar{0}ma{0}(100)[par][beta0][meanconv].png
+        data/columbus.out/er{0}ar{0}ma{0}(100)[par][beta{inc}][meanconv].png
+        data/columbus.out/er{0}ar{0}ma{0}(100)[par][beta{hoval}][meanconv].png
+        data/columbus.out/er{0}ar{0}ma{0}(100)[par][sigma^2][meanconv].png
+        data/columbus.out/er{0}ar{0}ma{0}(100)[par][beta0][stdconv].png
+        data/columbus.out/er{0}ar{0}ma{0}(100)[par][beta{inc}][stdconv].png
         < etc...>
-        data/columbus.out/er{0}ar{0}ma{0}(10000)[crt][llik][meanconv].png
-        data/columbus.out/er{0}ar{0}ma{0}(10000)[crt][hqc][meanconv].png
-        data/columbus.out/er{0}ar{0}ma{0}(10000)[crt][bic][meanconv].png
+        data/columbus.out/er{0}ar{0}ma{0}(100)[crt][llik][meanconv].png
+        data/columbus.out/er{0}ar{0}ma{0}(100)[crt][hqc][meanconv].png
+        data/columbus.out/er{0}ar{0}ma{0}(100)[crt][bic][meanconv].png
         < etc...>
-        data/columbus.out/er{0}ar{0}ma{0}(10000)[crt][sh's w][meanconv].png
-        data/columbus.out/er{0}ar{0}ma{0}(10000)[crt][sh's pr(gt.w)][meanconv].png
+        data/columbus.out/er{0}ar{0}ma{0}(100)[crt][sh's w][meanconv].png
+        data/columbus.out/er{0}ar{0}ma{0}(100)[crt][sh's pr(gt.w)][meanconv].png
         < etc...>
-        data/columbus.out/er{0}ar{0}ma{0}(10000)[crt][llik][stdconv].png
+        data/columbus.out/er{0}ar{0}ma{0}(100)[crt][llik][stdconv].png
         < etc...>
 
         We can now check results related to parameters
         >>> bt_results['par']['std']
-        array([[ 4.53939228],
-               [ 0.32716959],
-               [ 0.10166388],
-               [27.77199447]])
+        array([[ 4.57806733],
+               [ 0.36183926],
+               [ 0.10030306],
+               [25.64190947]])
         >>> bt_results['par']['mean']
-        array([[ 68.64830927],
-               [ -1.60017103],
-               [ -0.27412991],
-               [113.65767514]])
+        array([[ 68.69751808],
+               [ -1.63528151],
+               [ -0.26406989],
+               [110.05655975]])
 
         As well as those related to model-selection criteria
         >>> bt_results['crt']['std']
-        array([[ 6.0350291 ],
-               [12.07005819],
-               [12.07005819],
-               [12.07005819],
-               [ 0.24632772],
-               [ 0.08459525],
-               [ 0.08459525],
-               [ 0.01696112],
-               [ 0.256684  ],
-               [ 0.01696112],
-               [ 0.256684  ],
-               [ 2.82947687],
-               [ 0.28237586],
-               [ 2.33566169],
-               [ 0.27324022]])
+        array([[ 6.0674539 ],
+               [12.1349078 ],
+               [12.1349078 ],
+               [12.1349078 ],
+               [ 0.24765118],
+               [ 0.09014047],
+               [ 0.09014047],
+               [ 0.0163718 ],
+               [ 0.31623698],
+               [ 0.0163718 ],
+               [ 0.31623698],
+               [ 1.95257909],
+               [ 0.27927356],
+               [ 1.64770747],
+               [ 0.26140277]])
         >>> bt_results['crt']['mean']
-        array([[-184.75829442],
-               [ 377.66985078],
-               [ 381.19204973],
-               [ 375.51658884],
-               [   5.51887397],
-               [   0.57746949],
-               [   0.57746949],
-               [   0.96413782],
-               [   0.27278186],
-               [   0.96413782],
-               [   0.27278186],
-               [   2.20490559],
-               [   0.48933157],
-               [   1.94012218],
-               [   0.51922623]])
+        array([[-183.99302244],
+               [ 376.13930684],
+               [ 379.66150578],
+               [ 373.98604489],
+               [   5.48763838],
+               [   0.58612761],
+               [   0.58612761],
+               [   0.96713888],
+               [   0.34147171],
+               [   0.96713888],
+               [   0.34147171],
+               [   2.0759407 ],
+               [   0.47936832],
+               [   1.77543045],
+               [   0.51327171]])
 
         NB : the child class Presenter has methods which displays results
         in a more intelligible fashion.
@@ -2975,7 +3030,7 @@ class Metrician(Sampler):
         # -- Convergence plots
         bt_ = self._tempo[_key_]
         self._thts_collector(key='bt', thts=bt_)
-        if kws.get('plot_conv', True):
+        if kws.get('plot_conv', False):
             jk_ = self.jk_run(**kws)
             ht_ = self.hat_run(**kws)
             for key, btd in sorted(bt_.items()):
@@ -2994,15 +3049,16 @@ class Metrician(Sampler):
         s    = 0
         nbs  = self._nb_resamples
         nnd  = not self.opverbose
+        mod  = min(int(.1*nbs), 10)
         while s<nbs:
             self._bt_s = s
             if self.verbose:
-                if s%10 == 0:
+                if s%mod == 0:
                     print(
                         u'[BT~proc] resampling/seed '
                         u'n° {} over {}({})[{:.3f}%]'.format(
                             s, nbs, nbs - self._nb_resamples,
-                            100.*s/nbs
+                            100.*(s + 1)/nbs
                         ),
                         end="\n" if self.opverbose else "\r"
                     )
@@ -3018,10 +3074,58 @@ class Metrician(Sampler):
 
     _rname_stdzer = lambda s,n:(' '.join(n.split()), n.replace(' ',r'\ '))
     def conv_charter(self, key, btd, jkd, htd=None, m='mean', **kws):
-        """ 
+        """ Chart bootstrap-convergence of a specified coefficient's
+        moment statistic, either `'mean'` or standard-deviation 'std'`.
+        Require the bootstrap (`btd`), jackknife (`jkd`) and optionally
+        the hat (`htd`) estimates.
+
+        Example
+        -------
+        >>> o = Metrician(
+        ...     data_name  = 'columbus',
+        ...     y_name     = 'CRIME',
+        ...     x_names    = ['INC', 'HOVAL'],
+        ...     id_name    = 'POLYID',
+        ...     verbose    = False
+        ... )
+        >>> run_kwargs = {
+        ...     'nbsamples': 10,
+        ...     'ER_ks'    : [],
+        ...     'AR_ks'    : [],
+        ...     'MA_ks'    : [],
+        ... }
+        >>> bt_results = o.bt_run(**run_kwargs)
+        >>> jk_results = o.jk_run(**run_kwargs)
+        >>> ht_results = o.hat_run(**run_kwargs)
+
+        The stored convergence-information relates to parameters (par) and
+        criteria (crt).
+        >>> o.to_save
+        ['par', 'crt']
+        >>> gen = o.conv_charter(
+        ...     key        = 'par',
+        ...     btd        = bt_results,
+        ...     jkd        = jk_results, 
+        ...     htd        = ht_results,
+        ...     m          = 'mean',
+        ...     save_figs  = False,
+        ...     show_figs  = False,
+        ...     yield_figs = True,
+        ... )
+        >>> for g in gen:g.show()     # doctest: +SKIP
+        >>> plt.close()
         """
-        bt_  = btd['%s_conv'%m]
-        nvar = bt_.shape[0]
+        # Allow users to pass `key` only once.
+        _to_save = sorted(self.to_save)
+        if sorted(btd.keys()) == _to_save:
+            btd = btd[key]
+        if sorted(jkd.keys()) == _to_save:
+            jkd = jkd[key]
+        if sorted((htd or {}).keys()) == _to_save:
+            htd = htd[key]
+        
+        bt_    = btd['%s_conv'%m]
+        nvar   = bt_.shape[0]
         rnames = self._key2rnames[key]        
         for i in range(nvar):
 
@@ -3036,8 +3140,7 @@ class Metrician(Sampler):
             self.__figs_plter(self.__JK, jkd[m][i,:], rname_tx)
             if htd is not None:
                 self.__figs_plter(self.__HT, htd['stack'][i,:], rname_tx)
-                
-    
+
             plt.grid()
             x0, x1, y0, y1 = plt.axis()
             plt.axis((
@@ -3047,12 +3150,14 @@ class Metrician(Sampler):
                 y1
             ))
             
-            self._GaussianMLARIMA__set_legend()
-            
-            if kws.get('save_fig', True):
+            self._GaussianMLARIMA__set_legend()            
+            # -- save or/and show and/or yield.
+            if kws.get('save_figs', True):
                 self._GaussianMLARIMA__fig_saver(key, rname, '%s_conv'%m)
-            if kws.get('show_fig', False):
+            if kws.get('show_figs', False):
                 plt.show()
+            if kws.get('yield_figs', False):
+                yield plt
             plt.clf()
         plt.close()
 
@@ -3118,11 +3223,11 @@ class PIntervaler(Metrician):
 
         Example
         -------
-        >>> nb_resamples = 10000
+        >>> nb_resamples = 100
         >>> np.random.seed(0)
         >>> _3d_arr = np.random.random((1, 1, nb_resamples))
         >>> PIntervaler.Z_computer(_3d_arr, .5, nb_resamples)
-        (array([[0.01604311]]), array([[0.5064]]))
+        (array([[0.02506891]]), array([[0.51]]))
         """
         trues_abs = np.sum(
             bt_ < ht_, axis=2, dtype=np.float
@@ -3142,11 +3247,11 @@ class PIntervaler(Metrician):
 
         Example
         -------
-        >>> sample_size = 10000
+        >>> sample_size = 100
         >>> np.random.seed(0)
         >>> _3d_arr = np.random.random((1, 1, sample_size))
         >>> PIntervaler.A_computer(_3d_arr)
-        array([[0.00217299]])
+        array([[0.02210534]])
         """
         return (
             np.sum(pow(jk_dv, 3), axis=2)/6\
@@ -3212,14 +3317,12 @@ class PIntervaler(Metrician):
         ...     y_name    = 'CRIME',
         ...     x_names   = ['INC', 'HOVAL'],
         ...     id_name   = 'POLYID',
-        ...     nbsamples = 10000,
         ...     verbose   = False,
         ...     opverbose = False,
         ... )
         >>> o.type_I_err = .05
         >>> run_kwargs = {
-        ...     'plot_hist': False,
-        ...     'plot_conv': False,
+        ...     'nbsamples': 100
         ... }
         >>> results = o.PIs_computer(**run_kwargs)
         >>> parameters_related_results = results['par']
@@ -3229,34 +3332,34 @@ class PIntervaler(Metrician):
                [ -0.27393148],
                [122.75291298]])
         >>> parameters_related_results['boot_mean']
-        array([[ 68.64830927],
-               [ -1.60017103],
-               [ -0.27412991],
-               [113.65767514]])
+        array([[ 68.69751808],
+               [ -1.63528151],
+               [ -0.26406989],
+               [110.05655975]])
         >>> parameters_related_results['BCa_lo']
-        array([[59.97711055],
-               [-2.35708693],
-               [-0.4471698 ],
-               [76.50712145]])
+        array([[58.93604521],
+               [-2.19062752],
+               [-0.40182978],
+               [68.80394689]])
         >>> parameters_related_results['BCa_up']
-        array([[ 77.92911911],
-               [ -1.04484449],
-               [ -0.02301598],
-               [186.09021696]])
+        array([[ 76.22496762],
+               [ -0.80512223],
+               [ -0.02305421],
+               [163.00372702]])
 
         Let's check for distributions' symmetry
         >>> parameters_related_results['Z']
-        array([[0.00476261],
-               [0.01453896],
-               [0.01253347],
-               [0.40102733]])
+        array([[-0.05015358],
+               [ 0.20189348],
+               [-0.02506891],
+               [ 0.38532047]])
 
         The last component of the above vector is related to
         the variance of the residuals. As expected, it is far
         from being symmetrical. Actually, it reflects the fact
         that residuals' variance follows a chi-square distrib.
         (as the theory predicts) and thus necessitates a fairly
-        large correction factor, i.e. 0.40320149 >> 0.
+        large correction factor, i.e. 0.38532047 >> 0.
 
         What about skewnesses? 
         >>> parameters_related_results['A']
@@ -3270,33 +3373,33 @@ class PIntervaler(Metrician):
         type I error. Remember that in a normal-approximation
         case, those are 2.5% and 97.5%.
         >>> parameters_related_results['A1']
-        array([[0.02982623],
-               [0.0103961 ],
-               [0.04611224],
-               [0.07497771]])
+        array([[0.02332672],
+               [0.03134042],
+               [0.04007296],
+               [0.06979309]])
         >>> parameters_related_results['A2']
-        array([[0.97943582],
-               [0.95615396],
-               [0.99017499],
-               [0.98976623]])
+        array([[0.97309236],
+               [0.97887166],
+               [0.98756766],
+               [0.98903547]])
 
         Let's see what are the BCa-underlying standard deviations that
         would prevail in the symmetrical-distribution case.
         >>> parameters_related_results['std']
-        array([[ 4.57967817],
-               [ 0.33476188],
-               [ 0.10820449],
-               [27.95538499]])
+        array([[ 4.41052043],
+               [ 0.35345172],
+               [ 0.0966282 ],
+               [24.03099773]])
 
         while that of the bootstrap-sample are
         >>> parameters_related_results['boot_std']
-        array([[ 4.53939228],
-               [ 0.32716959],
-               [ 0.10166388],
-               [27.77199447]])
+        array([[ 4.57806733],
+               [ 0.36183926],
+               [ 0.10030306],
+               [25.64190947]])
         """
 
-        plt_h = run_kws.pop('plot_hist', True)
+        plt_h = run_kws.pop('plot_hist', False)
 
         ht = self.hat_run(**run_kws)
         jk = self.jk_run(**run_kws)
@@ -3306,7 +3409,7 @@ class PIntervaler(Metrician):
 
         for key in self.to_save:
             htd = ht[key]
-            ht_ = htd['hat'] = htd.pop('stack')
+            ht_ = htd['hat'] = htd.get('stack')
             btd = bt[key]
             bt_ = btd['stack']
             htd['Z'], htd['T'] = Z, T = self.Z_computer(
@@ -3336,7 +3439,7 @@ class PIntervaler(Metrician):
 
             if plt_h:
                 self.hist_charter(
-                    key, btd, htd,
+                    key, htd, btd,
                 )
 
             # -- save other stats for ease of reporting
@@ -3366,13 +3469,60 @@ class PIntervaler(Metrician):
                 ))
         return ht        
 
-    def hist_charter(self, key, btd, htd, **kws):
-        """ Charts bootstrap distribution.
+    def hist_charter(self, key, ptd, btd=None, **kws):
+        """ Charts bootstrap distributions.
+
+        Example
+        -------
+        >>> o = PIntervaler(
+        ...     data_name = 'columbus',
+        ...     y_name    = 'CRIME',
+        ...     x_names   = ['INC', 'HOVAL'],
+        ...     id_name   = 'POLYID',
+        ...     verbose   = False,
+        ...     opverbose = False,
+        ... )
+        >>> o.type_I_err = .05
+        >>> run_kwargs = {
+        ...     'nbsamples': 10000
+        ... }
+        >>> pi_results = o.PIs_computer(**run_kwargs)
+
+        The stored densities-information relates to parameters (par) and
+        criteria (crt).
+        >>> o.to_save
+        ['par', 'crt']
+        >>> gen_pars = o.hist_charter(
+        ...     key = 'par',
+        ...     ptd = pi_results,
+        ...     save_figs  = False,
+        ...     show_figs  = False,
+        ...     yield_figs = True,
+        ... )
+        >>> gen_crts = o.hist_charter(
+        ...     key = 'crt',
+        ...     ptd = pi_results,
+        ...     save_figs  = False,
+        ...     show_figs  = False,
+        ...     yield_figs = True,
+        ... )
+        >>> for g in gen_pars:g.show()     # doctest: +SKIP
+        >>> for g in gen_crts:g.show()     # doctest: +SKIP
+        >>> plt.close()
         """
+        if btd is None:
+            btd = self.bt_run()
+        # Allow users to pass `key` only once.
+        _to_save = sorted(self.to_save)
+        if sorted(btd.keys()) == _to_save:
+            btd = btd[key]
+        if sorted(ptd.keys()) == _to_save:
+            ptd = ptd[key]        
+
         bt_  = btd['stack']
         nvar = bt_.shape[0]
         cmap = plt.cm.get_cmap(kws.get('colormap', 'autumn') , nvar + 1)
-        ht_  = htd['hat']
+        pt_  = ptd['hat']
         bt_mu = btd['mean']
         rnames = self._key2rnames[key]
         
@@ -3386,7 +3536,7 @@ class PIntervaler(Metrician):
             for b in ['lo', 'up']:
                 self.__figs_plter(
                     key  = self.__PI,
-                    val  = htd['%s_%s'%(self.__PI, b)][i],
+                    val  = ptd['%s_%s'%(self.__PI, b)][i],
                     larg = b
                 )
     
@@ -3394,7 +3544,7 @@ class PIntervaler(Metrician):
             for b in ['lo', 'up']:  
                 self.__figs_plter(
                     key  = self.__BC,
-                    val  = htd['%s_%s'%(self.__BC, b)][i],
+                    val  = ptd['%s_%s'%(self.__BC, b)][i],
                     larg = b
                 )
                 
@@ -3402,14 +3552,16 @@ class PIntervaler(Metrician):
             self.__figs_plter(self.__BT, bt_mu[i], rname_tx) 
 
             # -- Hat-estimated parameter
-            self.__figs_plter(self.__HT, ht_[i], rname_tx) 
+            self.__figs_plter(self.__HT, pt_[i], rname_tx) 
 
             self._GaussianMLARIMA__set_legend()
-            # -- save or show
-            if kws.get('save_fig', True):
+            # -- save or/and show and/or yield.
+            if kws.get('save_figs', True):
                 self._GaussianMLARIMA__fig_saver(key, rname, 'dist')
-            if kws.get('show_fig', False):
+            if kws.get('show_figs', False):
                 plt.show()
+            if kws.get('yield_figs', False):
+                yield plt
             plt.clf()
         plt.close()           
 
@@ -3751,4 +3903,4 @@ if name_eq_main:
     npopts(8, True, 5e4)
     pdopts(5e4)
     import doctest
-    doctest.testmod(verbose=False)
+    doctest.testmod(verbose=True)
